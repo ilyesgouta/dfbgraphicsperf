@@ -29,7 +29,9 @@ ControllerScene::ControllerScene(QObject *parent, CSPEAllocationInfo* info) : QG
     m_allocationInfo = *info;
     m_allocationItemsHash.clear();
 
-    m_allocatedMemory = 0;
+    memset(&m_info, 0, sizeof(m_info));
+
+    m_info.lowestUsage = 0xffffffff;
 }
 
 void ControllerScene::setSceneRect(const QRectF &rect)
@@ -53,29 +55,40 @@ float ControllerScene::aspectRatio()
 
 void ControllerScene::addItem(RenderAllocationItem *item)
 {
-    m_allocatedMemory += item->allocationInfo().size;
-
     m_allocationItemsHash.insert(item->allocationInfo().offset, item);
-
     QGraphicsScene::addItem(item);
 
-    emit totalAllocatedChanged(m_allocatedMemory, item->allocationInfo().pool_size);
+    m_info.allocated += item->allocationInfo().size;
+    m_info.totalSize = item->allocationInfo().pool_size;
+    m_info.usageRatio = m_info.allocated / (float)m_info.totalSize;
+    m_info.peakUsage = (m_info.peakUsage < m_info.allocated) ? m_info.allocated : m_info.peakUsage;
+    m_info.lowestUsage = (m_info.lowestUsage > m_info.allocated) ? m_info.allocated : m_info.lowestUsage;
+
+    emit allocationChanged(m_info);
 }
 
 void ControllerScene::removeItem(RenderAllocationItem *item)
 {
-    m_allocatedMemory -= item->allocationInfo().size;
-
     m_allocationItemsHash.remove(item->allocationInfo().offset);
-
     QGraphicsScene::removeItem(item);
 
-    emit totalAllocatedChanged(m_allocatedMemory, item->allocationInfo().pool_size);
+    m_info.allocated -= item->allocationInfo().size;
+    m_info.totalSize = item->allocationInfo().pool_size;
+    m_info.usageRatio = m_info.allocated / (float)m_info.totalSize;
+    m_info.peakUsage = (m_info.peakUsage < m_info.allocated) ? m_info.allocated : m_info.peakUsage;
+    m_info.lowestUsage = (m_info.lowestUsage > m_info.allocated) ? m_info.allocated : m_info.lowestUsage;
+
+    emit allocationChanged(m_info);
 }
 
 RenderAllocationItem* ControllerScene::lookup(unsigned int offset)
 {
     return m_allocationItemsHash.value(offset);
+}
+
+const ControllerInfo& ControllerScene::getInfo()
+{
+    return (m_info);
 }
 
 RenderController::RenderController(QString ipAddr, int port, bool saveToFile)

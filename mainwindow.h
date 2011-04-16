@@ -50,16 +50,14 @@ private slots:
     void lostPackets(unsigned int lastValidNseq, unsigned int expectedNseq);
     void missingInformation(unsigned int nseq);
     void finished();
-    void totalAllocated(unsigned int size, unsigned int total);
+    void allocationChanged(const ControllerInfo& info);
 
-    void statusUpdate();
     void tabChanged(int i);
-
-signals:
-    void statusUpdated();
 
 private:
     Ui::MainWindow *ui;
+
+    void updateStatus();
 
     QMenuBar *m_menu;
 
@@ -76,7 +74,7 @@ private:
 
     QString m_status;
 
-    unsigned int m_allocatedMemory, m_allocationRatio, m_maxAllocated;
+    ControllerInfo m_info;
     unsigned int m_lostPackets;
 
     RenderController *m_renderController;

@@ -34,6 +34,14 @@
 
 using namespace std;
 
+typedef struct ControllerInfo {
+    unsigned int allocated;
+    unsigned int totalSize;
+    unsigned int peakUsage;
+    unsigned int lowestUsage;
+    float usageRatio;
+} ControllerInfo;
+
 class ControllerScene : public QGraphicsScene
 {
     Q_OBJECT
@@ -50,17 +58,18 @@ public:
 
     RenderAllocationItem* lookup(unsigned int offset);
 
+    const ControllerInfo& getInfo();
+
 signals:
-    void totalAllocatedChanged(unsigned int size, unsigned int total);
+    void allocationChanged(const ControllerInfo& info);
 
 private:
     CSPEAllocationInfo m_allocationInfo;
+    ControllerInfo m_info;
 
     QHash<unsigned int, RenderAllocationItem *> m_allocationItemsHash;
 
     float m_renderAspectRatio;
-
-    unsigned int m_allocatedMemory;
 };
 
 class RenderController : public QObject

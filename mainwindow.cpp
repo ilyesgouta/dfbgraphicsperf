@@ -23,6 +23,8 @@
 
 #include <assert.h>
 
+#define UNUSED_PARAM(a) (a) = (a)
+
 MainWindow::MainWindow(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::MainWindow)
@@ -61,6 +63,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_stopAction->setEnabled(false);
 
     m_renderController = 0;
+
+    memset(&m_info, 0, sizeof(m_info));
 }
 
 MainWindow::~MainWindow()
@@ -107,17 +111,12 @@ void MainWindow::connectToServer()
     connect(m_renderController, SIGNAL(lostPackets(unsigned int, unsigned int)), this, SLOT(lostPackets(unsigned int, unsigned int)));
     connect(m_renderController, SIGNAL(finished()), this, SLOT(finished()));
 
-    connect(this, SIGNAL(statusUpdated()), this, SLOT(statusUpdate()));
-
     connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
 
     m_connectAction->setEnabled(false);
     m_stopAction->setEnabled(true);
 
     m_lostPackets = 0;
-    m_allocatedMemory = 0;
-    m_allocationRatio = 0;
-    m_maxAllocated = 0;
 
     m_connectedSender = 0;
 
@@ -137,9 +136,9 @@ void MainWindow::newSurfacePool(ControllerScene* scene, char* name)
     renderTarget->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
 
     if (m_connectedSender)
-        assert(disconnect(m_connectedSender, SIGNAL(totalAllocatedChanged(uint, uint)), this, SLOT(totalAllocated(uint, uint))));
+        assert(disconnect(m_connectedSender, SIGNAL(allocationChanged(const ControllerInfo&)), this, SLOT(allocationChanged(const ControllerInfo&))));
 
-    assert(connect(scene, SIGNAL(totalAllocatedChanged(uint, uint)), this, SLOT(totalAllocated(uint, uint)), Qt::UniqueConnection));
+    assert(connect(scene, SIGNAL(allocationChanged(const ControllerInfo&)), this, SLOT(allocationChanged(const ControllerInfo&)), Qt::UniqueConnection));
 
     m_connectedSender = scene;
 
@@ -180,24 +179,26 @@ void MainWindow::lostPackets(unsigned int lastValidNseq, unsigned int expectedNs
 {
     m_lostPackets += lastValidNseq - expectedNseq;
 
-    emit statusUpdated();
+    updateStatus();
 }
 
-void MainWindow::totalAllocated(unsigned int size, unsigned int total)
+void MainWindow::allocationChanged(const ControllerInfo& info)
 {
-    m_allocatedMemory = size;
-    m_allocationRatio = (int)(((float)size / total) * 100);
+    m_info = info;
 
-    if (size > m_maxAllocated)
-        m_maxAllocated = size;
-
-    emit statusUpdated();
+    updateStatus();
 }
 
-void MainWindow::statusUpdate()
+void MainWindow::updateStatus()
 {
     char buf[256];
-    sprintf(buf, "Lost packets: %d\nAllocated video memory:\n  Currently allocated: %d (ratio: %d%%)\n  Peak usage: %d", m_lostPackets, m_allocatedMemory, m_allocationRatio, m_maxAllocated);
+
+    sprintf(buf, "Allocated video memory:\n"
+                 "  Currently allocated: %d (ratio: %.2f%%)\n"
+                 "  Peak usage: %d, Lowest usage: %d"
+                 "Lost packets: %d\n",
+                 m_info.allocated, m_info.usageRatio, m_info.peakUsage, m_info.lowestUsage, m_lostPackets);
+
     ui->label->setText(buf);
 }
 
@@ -211,12 +212,14 @@ void MainWindow::tabChanged(int i)
     if (target && target->scene())
     {
         if (m_connectedSender)
-            assert(disconnect(m_connectedSender, SIGNAL(totalAllocatedChanged(uint,uint)), this, SLOT(totalAllocated(uint, uint))));
+            assert(disconnect(m_connectedSender, SIGNAL(allocationChanged(const ControllerInfo&)), this, SLOT(allocationChanged(const ControllerInfo&))));
 
-        assert(connect(target->scene(), SIGNAL(totalAllocatedChanged(uint, uint)), this, SLOT(totalAllocated(uint, uint)), Qt::UniqueConnection));
+        m_info = static_cast<ControllerScene*>(target->scene())->getInfo();
+        updateStatus();
+
+        assert(connect(target->scene(), SIGNAL(allocationChanged(const ControllerInfo&)), this, SLOT(allocationChanged(const ControllerInfo&)), Qt::UniqueConnection));
 
         m_connectedSender = static_cast<ControllerScene*>(target->scene());
-        m_maxAllocated = 0;
     }
 }
 
@@ -243,5 +246,6 @@ void MainWindow::saveToFile()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    UNUSED_PARAM(event);
     stop();
 }
