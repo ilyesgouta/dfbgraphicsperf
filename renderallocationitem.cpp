@@ -22,6 +22,8 @@
 #include <directfb.h>
 #include <directfb_strings.h>
 
+#define UNUSED_PARAM(a) (a) = (a)
+
 DirectFBPixelFormatNames(pf_names);
 
 RenderAllocationItem::RenderAllocationItem(ControllerScene *scene, CSPEAllocationInfo *info)
@@ -35,6 +37,9 @@ RenderAllocationItem::RenderAllocationItem(ControllerScene *scene, CSPEAllocatio
 void RenderAllocationItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     int x1, y1, x2, y2;
+
+    UNUSED_PARAM(option);
+    UNUSED_PARAM(widget);
 
     x1 = (int)(m_allocationInfo.offset * m_scene->aspectRatio()) % (int)m_scene->width();
     y1 = (int)(m_allocationInfo.offset * m_scene->aspectRatio()) / (int)m_scene->width();

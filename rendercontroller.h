@@ -77,9 +77,11 @@ class RenderController : public QObject
     Q_OBJECT
 public:
     explicit RenderController(QString ipAddr, int port, bool saveToFile);
+    explicit RenderController(QString traceFile, int period_ms);
     ~RenderController();
 
     bool connect();
+    bool renderTrace();
     void disconnect();
 
     void saveTraceToFile(bool save);
@@ -124,6 +126,9 @@ private:
     QString m_ipAddr;
     int m_port;
     int m_udpSocket;
+
+    QString m_trace;
+    int m_renderPeriod; // in ms
 
     bool m_runThread;
     ReceiverThread *m_receiver;

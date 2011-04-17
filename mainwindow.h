@@ -45,6 +45,7 @@ private slots:
     void exit();
     void about();
     void saveToFile();
+    void playbackTrace();
 
     void newSurfacePool(ControllerScene *scene, char* name);
     void lostPackets(unsigned int lastValidNseq, unsigned int expectedNseq);
@@ -64,6 +65,7 @@ private:
     QAction *m_connectAction;
     QAction *m_stopAction;
     QAction *m_saveToFileAction;
+    QAction *m_playbackTraceAction;
 
     QMenu *m_fileMenu;
     QMenu *m_traceMenu;

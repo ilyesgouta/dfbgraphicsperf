@@ -20,6 +20,7 @@
 #include <QAction>
 #include <QMessageBox>
 #include <QInputDialog>
+#include <QFileDialog>
 
 #include <assert.h>
 
@@ -56,11 +57,17 @@ MainWindow::MainWindow(QWidget *parent) :
     m_saveToFileAction->setCheckable(true);
     connect(m_saveToFileAction, SIGNAL(triggered()), this, SLOT(saveToFile()));
 
+    m_traceMenu->addSeparator();
+
+    m_playbackTraceAction = m_traceMenu->addAction("&Playback a trace...");
+    connect(m_playbackTraceAction, SIGNAL(triggered()), this, SLOT(playbackTrace()));
+
     action = m_helpMenu->addAction("&?");
     connect(action, SIGNAL(triggered()), this, SLOT(about()));
 
     m_connectAction->setEnabled(true);
     m_stopAction->setEnabled(false);
+    m_playbackTraceAction->setEnabled(true);
 
     m_renderController = 0;
 
@@ -115,13 +122,43 @@ void MainWindow::connectToServer()
 
     m_connectAction->setEnabled(false);
     m_stopAction->setEnabled(true);
+    m_playbackTraceAction->setEnabled(false);
 
     m_lostPackets = 0;
-
     m_connectedSender = 0;
 
     ui->label->setText("Initializing...");
     m_renderController->connect();
+}
+
+void MainWindow::playbackTrace()
+{
+    if (m_renderController)
+        return;
+
+    QString traceName = QFileDialog::getOpenFileName(this, "Select a trace:");
+
+    if (!traceName.length())
+        return;
+
+    m_renderController = new RenderController(traceName, 500);
+
+    connect(m_renderController, SIGNAL(newSurfacePool(ControllerScene*, char*)), this, SLOT(newSurfacePool(ControllerScene*, char*)));
+    connect(m_renderController, SIGNAL(missingInformation(unsigned int)), this, SLOT(missingInformation(unsigned int)));
+    connect(m_renderController, SIGNAL(lostPackets(unsigned int, unsigned int)), this, SLOT(lostPackets(unsigned int, unsigned int)));
+    connect(m_renderController, SIGNAL(finished()), this, SLOT(finished()));
+
+    connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
+
+    m_connectAction->setEnabled(false);
+    m_stopAction->setEnabled(true);
+    m_playbackTraceAction->setEnabled(false);
+
+    m_lostPackets = 0;
+    m_connectedSender = 0;
+
+    ui->label->setText("Initializing...");
+    m_renderController->renderTrace();
 }
 
 void MainWindow::newSurfacePool(ControllerScene* scene, char* name)
@@ -168,6 +205,7 @@ void MainWindow::stop()
 
     m_connectAction->setEnabled(true);
     m_stopAction->setEnabled(false);
+    m_playbackTraceAction->setEnabled(true);
 }
 
 void MainWindow::missingInformation(unsigned int nseq)
@@ -195,7 +233,7 @@ void MainWindow::updateStatus()
 
     sprintf(buf, "Allocated video memory:\n"
                  "  Currently allocated: %d (ratio: %.2f%%)\n"
-                 "  Peak usage: %d, Lowest usage: %d"
+                 "  Peak usage: %d, Lowest usage: %d\n"
                  "Lost packets: %d\n",
                  m_info.allocated, m_info.usageRatio, m_info.peakUsage, m_info.lowestUsage, m_lostPackets);
 
@@ -230,7 +268,8 @@ void MainWindow::finished()
 
 void MainWindow::about()
 {
-    QMessageBox::information(this, "DFBVideoMemoryViz", "DirectFB Video Memory Viz, (C) Ilyes Gouta, 2011.");
+    QMessageBox::information(this, "DFBVideoMemoryViz", "DirectFB Video Memory Viz, (C) Ilyes Gouta, 2011.\n"
+                                                        "Released under the GNU General Public License v3.");
 }
 
 void MainWindow::exit()

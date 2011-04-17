@@ -115,6 +115,19 @@ RenderController::RenderController(QString ipAddr, int port, bool saveToFile)
     }
 }
 
+RenderController::RenderController(QString traceFile, int period)
+{
+    m_ipAddr = "";
+    m_port = -1;
+
+    m_saveToFile = false;
+
+    m_trace = traceFile;
+    m_renderPeriod = period;
+
+    m_currentNseq = m_expectedNseq = 0;
+}
+
 RenderController::~RenderController()
 {
     if (m_runThread)
@@ -144,6 +157,9 @@ bool RenderController::connect()
 {
     struct sockaddr_in addrIn;
 
+    if (m_port < 0)
+        return false;
+
     m_udpSocket = socket(AF_INET,SOCK_DGRAM, 0);
 
     if (m_udpSocket < 0)
@@ -160,6 +176,22 @@ bool RenderController::connect()
         close(m_udpSocket);
         return false;
     }
+
+    m_controllerSceneMap.clear();
+
+    m_controllerStatus = STATUS_IDLE;
+
+    m_runThread = true;
+
+    m_receiver = new ReceiverThread(this);
+    m_receiver->start();
+
+    return true;
+}
+
+bool RenderController::renderTrace()
+{
+    m_port = -1;
 
     m_controllerSceneMap.clear();
 
@@ -209,17 +241,36 @@ RenderController::ReceiverThread::ReceiverThread(RenderController *parent)
 
 void RenderController::ReceiverThread::run()
 {
-    char buf[4096];
+    FILE* trace;
 
     struct sockaddr_in addrIn;
-    socklen_t addrLen = sizeof(addrIn);
+    socklen_t addrLen;
+    char buf[2048];
 
-    memset(&addrIn, 0, sizeof(addrIn));
+    int s;
+
+    // m_port > 0 -> read from the network
+    if (m_parent->m_port > 0)
+        memset(&addrIn, 0, sizeof(addrIn));
+    else {
+        trace = fopen(m_parent->m_trace.toStdString().c_str(), "rb");
+        if (!trace)
+            return;
+    }
 
     while (m_parent->m_runThread)
     {
-        addrLen = sizeof(addrIn);
-        int s = recvfrom(m_parent->m_udpSocket, buf, sizeof(buf), 0, (sockaddr*)&addrIn, &addrLen);
+        if (m_parent->m_port > 0) {
+            addrLen = sizeof(addrIn);
+            s = recvfrom(m_parent->m_udpSocket, buf, sizeof(buf), 0, (sockaddr*)&addrIn, &addrLen);
+        } else {
+            s = fread(buf, sizeof(CSPEPacketEvent), 1, trace);
+            s = (s == 1) ? sizeof(CSPEPacketEvent) : 0;
+            if (!s && feof(trace))
+                break;
+
+            usleep(m_parent->m_renderPeriod * 1000);
+        }
 
         if (s <= 0) {
             m_parent->m_controllerStatus = (s == 0) ? STATUS_IDLE : STATUS_ERROR;
