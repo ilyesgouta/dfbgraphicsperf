@@ -141,7 +141,7 @@ void MainWindow::playbackTrace()
     if (!traceName.length())
         return;
 
-    m_renderController = new RenderController(traceName, 500);
+    m_renderController = new RenderController(traceName, 240);
 
     connect(m_renderController, SIGNAL(newSurfacePool(ControllerScene*, char*)), this, SLOT(newSurfacePool(ControllerScene*, char*)));
     connect(m_renderController, SIGNAL(missingInformation(unsigned int)), this, SLOT(missingInformation(unsigned int)));

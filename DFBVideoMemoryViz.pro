@@ -14,14 +14,17 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     rendertarget.cpp \
     rendercontroller.cpp \
-    renderallocationitem.cpp
+    renderallocationitem.cpp \
+    tracecontrollerdialog.cpp
 
 HEADERS  += mainwindow.h \
     rendertarget.h \
     rendercontroller.h \
-    renderallocationitem.h
+    renderallocationitem.h \
+    tracecontrollerdialog.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    tracecontrollerdialog.ui
 
 INCLUDEPATH += /home/ilyes/DirectFB-git/src
 INCLUDEPATH += /home/ilyes/DirectFB-git/include

@@ -115,7 +115,7 @@ RenderController::RenderController(QString ipAddr, int port, bool saveToFile)
     }
 }
 
-RenderController::RenderController(QString traceFile, int period)
+RenderController::RenderController(QString traceFile, int period) : m_renderingSemaphore(1)
 {
     m_ipAddr = "";
     m_port = -1;
@@ -197,6 +197,17 @@ bool RenderController::renderTrace()
 
     m_controllerStatus = STATUS_IDLE;
 
+    m_traceController = new TraceControllerDialog(this, m_renderPeriod);
+
+    if (!m_traceController)
+        return false;
+
+    QObject::connect(m_traceController, SIGNAL(renderPaceChanged(int)), this, SLOT(changeRenderPace(int)));
+    QObject::connect(m_traceController, SIGNAL(pausePlayback()), this, SLOT(pauseTraceRendering()));
+    QObject::connect(m_traceController, SIGNAL(resumePlayback()), this, SLOT(resumeTraceRendering()));
+
+    m_traceController->show();
+
     m_runThread = true;
 
     m_receiver = new ReceiverThread(this);
@@ -230,6 +241,13 @@ void RenderController::disconnect()
     m_controllerStatus = STATUS_IDLE;
 
     m_outputTrace.close();
+
+    if (m_traceController) {
+        m_traceController->close();
+        delete m_traceController;
+    }
+
+    m_traceController = NULL;
 }
 
 RenderController::ReceiverThread::ReceiverThread(RenderController *parent)
@@ -264,8 +282,13 @@ void RenderController::ReceiverThread::run()
             addrLen = sizeof(addrIn);
             s = recvfrom(m_parent->m_udpSocket, buf, sizeof(buf), 0, (sockaddr*)&addrIn, &addrLen);
         } else {
+            m_parent->m_renderingSemaphore.acquire();
+
             s = fread(buf, sizeof(CSPEPacketEvent), 1, trace);
             s = (s == 1) ? sizeof(CSPEPacketEvent) : 0;
+
+            m_parent->m_renderingSemaphore.release();
+
             if (!s && feof(trace))
                 break;
 
@@ -303,6 +326,21 @@ void RenderController::packetReceivedSink(char* buf, int size)
 
         processPacket(buf, size);
     }
+}
+
+void RenderController::changeRenderPace(int value)
+{
+    m_renderPeriod = value;
+}
+
+void RenderController::pauseTraceRendering()
+{
+    m_renderingSemaphore.acquire();
+}
+
+void RenderController::resumeTraceRendering()
+{
+    m_renderingSemaphore.release();
 }
 
 void RenderController::RenderAllocation(ControllerScene *scene, CSPEAllocationInfo* info)

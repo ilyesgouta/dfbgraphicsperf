@@ -22,6 +22,7 @@
 #include <QMap>
 #include <QHash>
 
+#include <QSemaphore>
 #include <QThreadPool>
 #include <QRunnable>
 
@@ -29,6 +30,7 @@
 #include <fstream>
 
 #include "renderallocationitem.h"
+#include "tracecontrollerdialog.h"
 
 #include <core/cspe_packet.h>
 
@@ -72,6 +74,8 @@ private:
     float m_renderAspectRatio;
 };
 
+class TraceControllerDialog;
+
 class RenderController : public QObject
 {
     Q_OBJECT
@@ -95,6 +99,9 @@ signals:
 
 private slots:
     void packetReceivedSink(char* buf, int size);
+    void changeRenderPace(int value);
+    void pauseTraceRendering();
+    void resumeTraceRendering();
 
 private:
     typedef enum {
@@ -130,8 +137,12 @@ private:
     QString m_trace;
     int m_renderPeriod; // in ms
 
+    TraceControllerDialog *m_traceController;
+
     bool m_runThread;
     ReceiverThread *m_receiver;
+
+    QSemaphore m_renderingSemaphore;
 
     bool m_saveToFile;
     ofstream m_outputTrace;
