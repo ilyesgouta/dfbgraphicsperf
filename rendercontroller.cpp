@@ -60,7 +60,7 @@ void ControllerScene::addItem(RenderAllocationItem *item)
 
     m_info.allocated += item->allocationInfo().size;
     m_info.totalSize = item->allocationInfo().pool_size;
-    m_info.usageRatio = m_info.allocated / (float)m_info.totalSize;
+    m_info.usageRatio = (m_info.allocated / (float)m_info.totalSize) * 100;
     m_info.peakUsage = (m_info.peakUsage < m_info.allocated) ? m_info.allocated : m_info.peakUsage;
     m_info.lowestUsage = (m_info.lowestUsage > m_info.allocated) ? m_info.allocated : m_info.lowestUsage;
 
@@ -74,7 +74,7 @@ void ControllerScene::removeItem(RenderAllocationItem *item)
 
     m_info.allocated -= item->allocationInfo().size;
     m_info.totalSize = item->allocationInfo().pool_size;
-    m_info.usageRatio = m_info.allocated / (float)m_info.totalSize;
+    m_info.usageRatio = (m_info.allocated / (float)m_info.totalSize) * 100;
     m_info.peakUsage = (m_info.peakUsage < m_info.allocated) ? m_info.allocated : m_info.peakUsage;
     m_info.lowestUsage = (m_info.lowestUsage > m_info.allocated) ? m_info.allocated : m_info.lowestUsage;
 
@@ -205,13 +205,13 @@ bool RenderController::renderTrace()
     QObject::connect(m_traceController, SIGNAL(renderPaceChanged(int)), this, SLOT(changeRenderPace(int)));
     QObject::connect(m_traceController, SIGNAL(pausePlayback()), this, SLOT(pauseTraceRendering()));
     QObject::connect(m_traceController, SIGNAL(resumePlayback()), this, SLOT(resumeTraceRendering()));
+    QObject::connect(m_traceController, SIGNAL(timeLineTracking(int)), this, SLOT(timeLineTracking(int)));
+    QObject::connect(m_traceController, SIGNAL(timeLineReleased(int)), this, SLOT(timeLineReleased(int)));
 
     m_traceController->show();
 
-    m_runThread = true;
-
-    m_receiver = new ReceiverThread(this);
-    m_receiver->start();
+    m_trackingTimeline = false;
+    m_trackingTraceOffset = -1;
 
     return true;
 }
@@ -227,7 +227,11 @@ void RenderController::disconnect()
     }
 
     if (m_receiver) {
+        m_runThread = false;
+        m_renderingSemaphore.release();
+
         m_receiver->wait();
+
         delete m_receiver;
         m_receiver = 0;
     }
@@ -244,28 +248,35 @@ void RenderController::disconnect()
 
     if (m_traceController) {
         m_traceController->close();
-        delete m_traceController;
-    }
 
-    m_traceController = NULL;
+        delete m_traceController;
+        m_traceController = 0;
+    }
 }
 
 RenderController::ReceiverThread::ReceiverThread(RenderController *parent)
 {
     m_parent = parent;
 
-    connect(m_parent, SIGNAL(packetReceived(char*,int)), m_parent, SLOT(packetReceivedSink(char*,int)));
+    QObject::connect(m_parent, SIGNAL(partialAllocation(CSPEPacketEvent)), m_parent, SLOT(partialAllocationEvent(CSPEPacketEvent)));
+    QObject::connect(m_parent, SIGNAL(partialRelease(CSPEPacketEvent)), m_parent, SLOT(partialReleaseEvent(CSPEPacketEvent)));
+}
+
+RenderController::ReceiverThread::~ReceiverThread()
+{
+    QObject::disconnect(m_parent, SIGNAL(partialAllocation(CSPEPacketEvent)));
+    QObject::disconnect(m_parent, SIGNAL(partialRelease(CSPEPacketEvent)));
 }
 
 void RenderController::ReceiverThread::run()
 {
-    FILE* trace;
+    FILE* trace = NULL;
 
     struct sockaddr_in addrIn;
     socklen_t addrLen;
     char buf[2048];
 
-    int s;
+    int s, x = 0;
 
     // m_port > 0 -> read from the network
     if (m_parent->m_port > 0)
@@ -274,6 +285,18 @@ void RenderController::ReceiverThread::run()
         trace = fopen(m_parent->m_trace.toStdString().c_str(), "rb");
         if (!trace)
             return;
+
+        fseek(trace, 0, SEEK_END);
+        long size = ftell(trace);
+
+        if (size < (long)sizeof(CSPEPacketEvent)) {
+            fclose(trace);
+            return;
+        }
+
+        fseek(trace, 0, SEEK_SET);
+
+        m_parent->m_traceController->setTimeLineMinMax(0, size / sizeof(CSPEPacketEvent));
     }
 
     while (m_parent->m_runThread)
@@ -284,7 +307,7 @@ void RenderController::ReceiverThread::run()
         } else {
             m_parent->m_renderingSemaphore.acquire();
 
-            s = fread(buf, sizeof(CSPEPacketEvent), 1, trace);
+            x += (s = fread(buf, sizeof(CSPEPacketEvent), 1, trace));
             s = (s == 1) ? sizeof(CSPEPacketEvent) : 0;
 
             m_parent->m_renderingSemaphore.release();
@@ -292,6 +315,7 @@ void RenderController::ReceiverThread::run()
             if (!s && feof(trace))
                 break;
 
+            m_parent->m_traceController->setTimeLinePosition(x);
             usleep(m_parent->m_renderPeriod * 1000);
         }
 
@@ -300,32 +324,18 @@ void RenderController::ReceiverThread::run()
             break;
         }
 
-        emit m_parent->packetReceived(buf, s);
+        m_parent->packetReceived(buf, s);
     }
-
-    disconnect(m_parent, SIGNAL(packetReceived(char*,int)), m_parent, SLOT(packetReceivedSink(char*,int)));
 
     m_parent->m_controllerStatus = STATUS_IDLE;
-}
 
-void RenderController::packetReceivedSink(char* buf, int size)
-{
-    // Inspect the header for the sequence number
-    CSPEPacketHeader *header = reinterpret_cast<CSPEPacketHeader*>(buf);
+    if (m_parent->m_traceController)
+        m_parent->m_traceController->stop();
 
-    if (header->nseq != m_expectedNseq) {
-        m_currentNseq = header->nseq;
+    if (trace)
+        fclose(trace);
 
-        emit lostPackets(m_currentNseq, m_expectedNseq);
-        m_expectedNseq = m_currentNseq + 1;
-
-        m_controllerStatus = STATUS_RECEIVING; //STATUS_SYNCING;
-    } else {
-        if (m_controllerStatus == STATUS_IDLE)
-            m_controllerStatus = STATUS_RECEIVING; //STATUS_SYNCING;
-
-        processPacket(buf, size);
-    }
+    emit m_parent->tracePlaybackEnded();
 }
 
 void RenderController::changeRenderPace(int value)
@@ -335,12 +345,54 @@ void RenderController::changeRenderPace(int value)
 
 void RenderController::pauseTraceRendering()
 {
-    m_renderingSemaphore.acquire();
+    if (m_receiver)
+        m_renderingSemaphore.acquire();
 }
 
 void RenderController::resumeTraceRendering()
 {
+    if (!m_receiver)
+    {
+        m_runThread = true;
+
+        m_renderingSemaphore.acquire(); // Request the semaphore: we're the initiator
+
+        QObject::connect(this, SIGNAL(tracePlaybackEnded()), this, SLOT(tracePlaybackEndedEvent()));
+
+        m_receiver = new ReceiverThread(this);
+        m_receiver->start();
+    }
+
     m_renderingSemaphore.release();
+}
+
+void RenderController::timeLineTracking(int value)
+{
+    if (!m_trackingTimeline) {
+        m_trackingTimeline = true;
+        m_trackingTraceOffset = value;
+    }
+}
+
+void RenderController::timeLineReleased(int value)
+{
+    m_trackingTimeline = false;
+}
+
+void RenderController::tracePlaybackEndedEvent()
+{
+    if (m_receiver)
+    {
+        m_runThread = false;
+        m_renderingSemaphore.release();
+
+        m_receiver->wait();
+
+        delete m_receiver;
+        m_receiver = 0;
+
+        QObject::disconnect(this, SIGNAL(tracePlaybackEnded()));
+    }
 }
 
 void RenderController::RenderAllocation(ControllerScene *scene, CSPEAllocationInfo* info)
@@ -400,46 +452,56 @@ void RenderController::processFullCapture(char* buf, int size)
     }
 }
 
-void RenderController::processPartialPacket(char* buf, int size)
+void RenderController::partialAllocationEvent(CSPEPacketEvent event)
 {
-    CSPEPacketEvent *packet = reinterpret_cast<CSPEPacketEvent*>(buf);
-    CSPEPartialInfo* partialInfo = &packet->payload.partial;
+    CSPEPartialInfo* partialInfo = &event.payload.partial;
 
     ControllerScene *scene;
 
-    size -= offsetof(CSPEPacketEvent, payload.partial.allocation);
+    scene = m_controllerSceneMap.value(partialInfo->allocation.pool_id);
+
+    if (!m_controllerSceneMap.contains(partialInfo->allocation.pool_id))
+            assert(!scene);
+
+    if (!scene && !m_controllerSceneMap.contains(partialInfo->allocation.pool_id))
+    {
+        scene = new ControllerScene(this, &partialInfo->allocation);
+
+        m_controllerSceneMap.insert(partialInfo->allocation.pool_id, scene);
+
+        scene->setSceneRect(0, 0, 800, 600);
+        scene->setBackgroundBrush(QBrush(QColor(0, 0, 0)));
+
+        emit newSurfacePool(scene, partialInfo->allocation.name);
+    }
+
+    RenderAllocation(scene, &partialInfo->allocation);
+}
+
+void RenderController::partialReleaseEvent(CSPEPacketEvent event)
+{
+    CSPEPartialInfo* partialInfo = &event.payload.partial;
+
+    ControllerScene *scene = m_controllerSceneMap.value(partialInfo->allocation.pool_id);
+
+    if (scene)
+        ReleaseAllocation(scene, &partialInfo->allocation);
+}
+
+void RenderController::processPartialPacket(char* buf)
+{
+    CSPEPacketEvent *packet = reinterpret_cast<CSPEPacketEvent*>(buf);
 
     switch (packet->header.event) {
     case CSPE_ALLOCATION_EVENT:
-        if (!m_controllerSceneMap.contains(partialInfo->allocation.pool_id))
-        {
-            scene = new ControllerScene(this, &partialInfo->allocation);
-
-            m_controllerSceneMap.insert(partialInfo->allocation.pool_id, scene);
-
-            scene->setSceneRect(0, 0, 800, 600);
-            scene->setBackgroundBrush(QBrush(QColor(0, 0, 0)));
-
-            emit newSurfacePool(scene, partialInfo->allocation.name);
-        }
-
-        RenderAllocation(m_controllerSceneMap.value(partialInfo->allocation.pool_id), &partialInfo->allocation);
+        emit partialAllocation(*packet); // Copy the object before switching the the main thread
         break;
     case CSPE_RELEASE_EVENT:
-        scene = m_controllerSceneMap.value(partialInfo->allocation.pool_id);
-        if (scene)
-            ReleaseAllocation(scene, &partialInfo->allocation);
+        emit partialRelease(*packet); // Copy the object before switching the the main thread
         break;
     default:
         break;
     }
-
-    size -= sizeof(CSPEAllocationInfo);
-
-    assert(size == 0);
-
-    if (size)
-        emit missingInformation(packet->header.nseq);
 }
 
 void RenderController::processPacket(char* buf, int size)
@@ -461,9 +523,32 @@ void RenderController::processPacket(char* buf, int size)
     case STATUS_RECEIVING:
         if ((header->event != CSPE_ALLOCATION_EVENT) && (header->event != CSPE_RELEASE_EVENT))
             return;
-        processPartialPacket(buf, size);
+        processPartialPacket(buf);
         break;
     default:
         break;
+    }
+}
+
+void RenderController::packetReceived(char* buf, int size)
+{
+    // Inspect the header for the sequence number
+    CSPEPacketHeader *header = reinterpret_cast<CSPEPacketHeader*>(buf);
+
+    if (header->nseq != m_expectedNseq) {
+        m_currentNseq = header->nseq;
+
+        emit lostPackets(m_currentNseq, m_expectedNseq);
+        m_expectedNseq = m_currentNseq + 1;
+
+        m_controllerStatus = STATUS_RECEIVING; //STATUS_SYNCING;
+    } else {
+        if (m_controllerStatus == STATUS_IDLE)
+            m_controllerStatus = STATUS_RECEIVING; //STATUS_SYNCING;
+
+        if (size != sizeof(CSPEPacketEvent))
+            emit missingInformation(header->nseq);
+        else
+            processPacket(buf, size);
     }
 }

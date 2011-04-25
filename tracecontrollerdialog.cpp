@@ -29,11 +29,21 @@ TraceControllerDialog::TraceControllerDialog(RenderController *controller, int p
     connect(ui->play, SIGNAL(toggled(bool)), this, SLOT(playPausePressed(bool)));
     connect(ui->renderPace, SIGNAL(sliderMoved(int)), this, SLOT(renderPace(int)));
 
-    ui->play->setText("&Pause");
+    connect(ui->timelineSlider, SIGNAL(sliderMoved(int)), this, SLOT(timeLineSliderMoved(int)));
+    connect(ui->timelineSlider, SIGNAL(sliderReleased()), this, SLOT(timeLineSliderReleased()));
+
+    ui->play->setText("&Play");
 
     setFixedSize(width(), height());
 
     ui->renderPace->setValue(period);
+
+    m_max = 0;
+
+    char buf[64];
+
+    sprintf(buf, "Rendering Pace (%d ms)", period);
+    ui->label->setText(buf);
 
     setWindowTitle("Trace Controller");
 }
@@ -45,7 +55,7 @@ TraceControllerDialog::~TraceControllerDialog()
 
 void TraceControllerDialog::playPausePressed(bool toggled)
 {
-    if (toggled) {
+    if (!toggled) {
         emit pausePlayback();
         ui->play->setText("&Play");
     } else {
@@ -56,5 +66,54 @@ void TraceControllerDialog::playPausePressed(bool toggled)
 
 void TraceControllerDialog::renderPace(int value)
 {
+    char buf[64];
+
+    sprintf(buf, "Rendering Pace (%d ms)", value);
+    ui->label->setText(buf);
+
     emit renderPaceChanged(value);
+}
+
+void TraceControllerDialog::setTimeLineMinMax(int min, int max)
+{
+    char buf[64];
+
+    sprintf(buf, "Timeline (%d frames)", max);
+    ui->label_2->setText(buf);
+
+    m_max = max;
+
+    ui->timelineSlider->setMinimum(min);
+    ui->timelineSlider->setMaximum(max);
+}
+
+void TraceControllerDialog::setTimeLinePosition(int value)
+{
+    char buf[64];
+
+    sprintf(buf, "Timeline (%d/%d frames)", value, m_max);
+    ui->label_2->setText(buf);
+
+    ui->timelineSlider->setValue(value);
+}
+
+void TraceControllerDialog::stop()
+{
+    ui->play->setText("&Play");
+    ui->play->setChecked(false);
+
+    ui->timelineSlider->setValue(0);
+
+    ui->label_2->setText("Timeline");
+}
+
+void TraceControllerDialog::timeLineSliderMoved(int value)
+{
+    emit timeLineTracking(value);
+}
+
+void TraceControllerDialog::timeLineSliderReleased()
+{
+    int value = ui->timelineSlider->value();
+    emit timeLineReleased(value);
 }

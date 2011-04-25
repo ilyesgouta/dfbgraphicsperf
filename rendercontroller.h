@@ -86,6 +86,7 @@ public:
 
     bool connect();
     bool renderTrace();
+
     void disconnect();
 
     void saveTraceToFile(bool save);
@@ -95,13 +96,23 @@ signals:
     void lostPackets(unsigned int lastValidNseq, unsigned int expectedNseq);
     void missingInformation(unsigned int nseq);
     void finished();
-    void packetReceived(char* buf, int size);
+
+    void partialAllocation(CSPEPacketEvent event);
+    void partialRelease(CSPEPacketEvent event);
+
+    void tracePlaybackEnded();
 
 private slots:
-    void packetReceivedSink(char* buf, int size);
     void changeRenderPace(int value);
     void pauseTraceRendering();
     void resumeTraceRendering();
+    void timeLineTracking(int value);
+    void timeLineReleased(int value);
+
+    void partialAllocationEvent(CSPEPacketEvent event);
+    void partialReleaseEvent(CSPEPacketEvent event);
+
+    void tracePlaybackEndedEvent();
 
 private:
     typedef enum {
@@ -114,6 +125,7 @@ private:
     class ReceiverThread : public QThread {
     public:
         ReceiverThread(RenderController* parent);
+        ~ReceiverThread();
 
         void run();
 
@@ -121,9 +133,10 @@ private:
         RenderController *m_parent;
     };
 
+    void packetReceived(char* buf, int size);
     void processPacket(char* buf, int size);
     void processFullCapture(char* buf, int size);
-    void processPartialPacket(char* buf, int size);
+    void processPartialPacket(char* buf);
 
     void RenderAllocation(ControllerScene *scene, CSPEAllocationInfo* info);
     void ReleaseAllocation(ControllerScene *scene, CSPEAllocationInfo* info);
@@ -138,6 +151,8 @@ private:
     int m_renderPeriod; // in ms
 
     TraceControllerDialog *m_traceController;
+    bool m_trackingTimeline;
+    long m_trackingTraceOffset;
 
     bool m_runThread;
     ReceiverThread *m_receiver;

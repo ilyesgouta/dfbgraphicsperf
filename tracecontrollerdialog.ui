@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>436</width>
-    <height>99</height>
+    <height>155</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,7 +20,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>30</y>
+     <y>90</y>
      <width>421</width>
      <height>20</height>
     </rect>
@@ -48,20 +48,20 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>10</y>
-     <width>141</width>
+     <y>70</y>
+     <width>151</width>
      <height>16</height>
     </rect>
    </property>
    <property name="text">
-    <string>Rendering Pace (in ms):</string>
+    <string>Rendering Pace (in ms)</string>
    </property>
   </widget>
   <widget class="QPushButton" name="play">
    <property name="geometry">
     <rect>
      <x>340</x>
-     <y>60</y>
+     <y>120</y>
      <width>85</width>
      <height>27</height>
     </rect>
@@ -71,6 +71,32 @@
    </property>
    <property name="checkable">
     <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>20</y>
+     <width>151</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Timeline</string>
+   </property>
+  </widget>
+  <widget class="QSlider" name="timelineSlider">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>40</y>
+     <width>421</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
    </property>
   </widget>
  </widget>

@@ -50,17 +50,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_fileMenu->addSeparator();
 
+    m_playbackTraceAction = m_fileMenu->addAction("&Playback a trace...");
+    connect(m_playbackTraceAction, SIGNAL(triggered()), this, SLOT(playbackTrace()));
+
+    m_fileMenu->addSeparator();
+
     action = m_fileMenu->addAction("&Exit");
     connect(action, SIGNAL(triggered()), this, SLOT(exit()));
 
     m_saveToFileAction = m_traceMenu->addAction("&Save trace to file");
     m_saveToFileAction->setCheckable(true);
     connect(m_saveToFileAction, SIGNAL(triggered()), this, SLOT(saveToFile()));
-
-    m_traceMenu->addSeparator();
-
-    m_playbackTraceAction = m_traceMenu->addAction("&Playback a trace...");
-    connect(m_playbackTraceAction, SIGNAL(triggered()), this, SLOT(playbackTrace()));
 
     action = m_helpMenu->addAction("&?");
     connect(action, SIGNAL(triggered()), this, SLOT(about()));
@@ -72,6 +72,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_renderController = 0;
 
     memset(&m_info, 0, sizeof(m_info));
+
+    qRegisterMetaType<CSPEPacketEvent>("CSPEPacketEvent");
 }
 
 MainWindow::~MainWindow()

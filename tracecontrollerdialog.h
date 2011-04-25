@@ -33,19 +33,30 @@ public:
     TraceControllerDialog(RenderController *controller, int period);
     ~TraceControllerDialog();
 
+    void setTimeLineMinMax(int min, int max);
+    void setTimeLinePosition(int value);
+
+    void stop();
+
 signals:
     void renderPaceChanged(int value);
     void pausePlayback();
     void resumePlayback();
+    void timeLineTracking(int value);
+    void timeLineReleased(int value);
 
 private slots:
     void playPausePressed(bool toggled);
     void renderPace(int value);
+    void timeLineSliderMoved(int value);
+    void timeLineSliderReleased();
 
 private:
     Ui::TraceControllerDialog *ui;
 
     RenderController *m_parent;
+
+    int m_max;
 };
 
 #endif // TRACECONTROLLERDIALOG_H
