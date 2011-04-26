@@ -100,6 +100,8 @@ RenderController::RenderController(QString ipAddr, int port, bool saveToFile)
 
     m_saveToFile = saveToFile;
 
+    m_receiver = 0;
+
     time_t t = time(NULL);
     localtime_r(&t, &m_startingDate);
 
@@ -121,6 +123,8 @@ RenderController::RenderController(QString traceFile, int period) : m_renderingS
     m_port = -1;
 
     m_saveToFile = false;
+
+    m_receiver = 0;
 
     m_trace = traceFile;
     m_renderPeriod = period;
