@@ -214,8 +214,10 @@ bool RenderController::renderTrace()
 
     m_traceController->show();
 
-    m_trackingTimeline = false;
     m_trackingTraceOffset = -1;
+
+    m_isPaused = true;
+    m_isTracking = false;
 
     return true;
 }
@@ -275,12 +277,15 @@ RenderController::ReceiverThread::~ReceiverThread()
 void RenderController::ReceiverThread::run()
 {
     FILE* trace = NULL;
+    int trackingTraceOffset, currentPosition = 0;
 
     struct sockaddr_in addrIn;
     socklen_t addrLen;
     char buf[2048];
 
-    int s, x = 0;
+    int s;
+
+    TracePlaybackMode mode = NORMAL;
 
     // m_port > 0 -> read from the network
     if (m_parent->m_port > 0)
@@ -300,6 +305,8 @@ void RenderController::ReceiverThread::run()
 
         fseek(trace, 0, SEEK_SET);
 
+        trackingTraceOffset = m_parent->m_trackingTraceOffset;
+
         m_parent->m_traceController->setTimeLineMinMax(0, size / sizeof(CSPEPacketEvent));
     }
 
@@ -308,19 +315,41 @@ void RenderController::ReceiverThread::run()
         if (m_parent->m_port > 0) {
             addrLen = sizeof(addrIn);
             s = recvfrom(m_parent->m_udpSocket, buf, sizeof(buf), 0, (sockaddr*)&addrIn, &addrLen);
-        } else {
+        } else
+        {
             m_parent->m_renderingSemaphore.acquire();
 
-            x += (s = fread(buf, sizeof(CSPEPacketEvent), 1, trace));
+            if ((mode == NORMAL) && (trackingTraceOffset != m_parent->m_trackingTraceOffset)) {
+                trackingTraceOffset = m_parent->m_trackingTraceOffset;
+                mode = (currentPosition < trackingTraceOffset) ? FAST_FORWARD : FAST_REWIND;
+            }
+
+            if (mode == FAST_REWIND)
+                fseek(trace, -sizeof(CSPEPacketEvent), SEEK_CUR);
+
+            s = fread(buf, sizeof(CSPEPacketEvent), 1, trace);
             s = (s == 1) ? sizeof(CSPEPacketEvent) : 0;
+
+            if (mode == FAST_REWIND)
+                fseek(trace, -sizeof(CSPEPacketEvent), SEEK_CUR);
+
+            currentPosition = ftell(trace);
+            currentPosition /= sizeof(CSPEPacketEvent);
+
+            if ((mode != NORMAL) && (currentPosition == trackingTraceOffset))
+                mode = NORMAL;
 
             m_parent->m_renderingSemaphore.release();
 
             if (!s && feof(trace))
                 break;
 
-            m_parent->m_traceController->setTimeLinePosition(x);
-            usleep(m_parent->m_renderPeriod * 1000);
+            if (mode == NORMAL) {
+                if (!m_parent->m_isTracking)
+                    m_parent->m_traceController->setTimeLinePosition(currentPosition);
+
+                usleep(m_parent->m_renderPeriod * 1000);
+            }
         }
 
         if (s <= 0) {
@@ -328,7 +357,7 @@ void RenderController::ReceiverThread::run()
             break;
         }
 
-        m_parent->packetReceived(buf, s);
+        m_parent->packetReceived(buf, s, mode);
     }
 
     m_parent->m_controllerStatus = STATUS_IDLE;
@@ -349,8 +378,10 @@ void RenderController::changeRenderPace(int value)
 
 void RenderController::pauseTraceRendering()
 {
-    if (m_receiver)
+    if (m_receiver && !m_isPaused) {
         m_renderingSemaphore.acquire();
+        m_isPaused = true;
+    }
 }
 
 void RenderController::resumeTraceRendering()
@@ -358,6 +389,7 @@ void RenderController::resumeTraceRendering()
     if (!m_receiver)
     {
         m_runThread = true;
+        m_isPaused = true;
 
         m_renderingSemaphore.acquire(); // Request the semaphore: we're the initiator
 
@@ -367,20 +399,28 @@ void RenderController::resumeTraceRendering()
         m_receiver->start();
     }
 
-    m_renderingSemaphore.release();
+    if (m_isPaused) {
+        m_renderingSemaphore.release();
+        m_isPaused = false;
+    }
 }
 
 void RenderController::timeLineTracking(int value)
 {
-    if (!m_trackingTimeline) {
-        m_trackingTimeline = true;
-        m_trackingTraceOffset = value;
-    }
+    m_isTracking = true;
 }
 
 void RenderController::timeLineReleased(int value)
 {
-    m_trackingTimeline = false;
+    m_isTracking = false;
+
+    if (!m_isPaused)
+        m_renderingSemaphore.acquire();
+
+    m_trackingTraceOffset = value;
+
+    if (!m_isPaused)
+        m_renderingSemaphore.release();
 }
 
 void RenderController::tracePlaybackEndedEvent()
@@ -508,7 +548,7 @@ void RenderController::processPartialPacket(char* buf)
     }
 }
 
-void RenderController::processPacket(char* buf, int size)
+void RenderController::processPacket(char* buf, int size, TracePlaybackMode mode)
 {
     CSPEPacketHeader *header = reinterpret_cast<CSPEPacketHeader*>(buf);
 
@@ -527,6 +567,10 @@ void RenderController::processPacket(char* buf, int size)
     case STATUS_RECEIVING:
         if ((header->event != CSPE_ALLOCATION_EVENT) && (header->event != CSPE_RELEASE_EVENT))
             return;
+
+        if (mode == FAST_REWIND) // force a release event if we're rewinding the trace
+            header->event = CSPE_RELEASE_EVENT;
+
         processPartialPacket(buf);
         break;
     default:
@@ -534,12 +578,12 @@ void RenderController::processPacket(char* buf, int size)
     }
 }
 
-void RenderController::packetReceived(char* buf, int size)
+void RenderController::packetReceived(char* buf, int size, TracePlaybackMode mode)
 {
     // Inspect the header for the sequence number
     CSPEPacketHeader *header = reinterpret_cast<CSPEPacketHeader*>(buf);
 
-    if (header->nseq != m_expectedNseq) {
+    if ((mode != FAST_REWIND) && (header->nseq != m_expectedNseq)) {
         m_currentNseq = header->nseq;
 
         emit lostPackets(m_currentNseq, m_expectedNseq);
@@ -553,6 +597,6 @@ void RenderController::packetReceived(char* buf, int size)
         if (size != sizeof(CSPEPacketEvent))
             emit missingInformation(header->nseq);
         else
-            processPacket(buf, size);
+            processPacket(buf, size, mode);
     }
 }

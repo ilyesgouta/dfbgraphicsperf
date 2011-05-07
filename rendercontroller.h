@@ -122,6 +122,12 @@ private:
         STATUS_ERROR
     } ControllerStatus;
 
+    typedef enum {
+        NORMAL,
+        FAST_FORWARD,
+        FAST_REWIND
+    } TracePlaybackMode;
+
     class ReceiverThread : public QThread {
     public:
         ReceiverThread(RenderController* parent);
@@ -133,8 +139,8 @@ private:
         RenderController *m_parent;
     };
 
-    void packetReceived(char* buf, int size);
-    void processPacket(char* buf, int size);
+    void packetReceived(char* buf, int size, TracePlaybackMode mode);
+    void processPacket(char* buf, int size, TracePlaybackMode mode);
     void processFullCapture(char* buf, int size);
     void processPartialPacket(char* buf);
 
@@ -151,13 +157,14 @@ private:
     int m_renderPeriod; // in ms
 
     TraceControllerDialog *m_traceController;
-    bool m_trackingTimeline;
     long m_trackingTraceOffset;
+    bool m_isTracking;
 
     bool m_runThread;
     ReceiverThread *m_receiver;
 
     QSemaphore m_renderingSemaphore;
+    bool m_isPaused;
 
     bool m_saveToFile;
     ofstream m_outputTrace;
