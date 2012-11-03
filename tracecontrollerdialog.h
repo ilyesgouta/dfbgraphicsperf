@@ -1,4 +1,4 @@
-// DFBVideoMemoryViz
+// DFbGraphicsPerf
 // Copyright (C) 2011, Ilyes Gouta, ilyes.gouta@gmail.com
 //
 // This program is free software: you can redistribute it and/or modify

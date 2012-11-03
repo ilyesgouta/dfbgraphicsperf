@@ -1,4 +1,4 @@
-// DFBVideoMemoryViz
+// DFbGraphicsPerf
 // Copyright (C) 2011, Ilyes Gouta, ilyes.gouta@gmail.com
 //
 // This program is free software: you can redistribute it and/or modify
@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
-    setWindowTitle("DFBVideoMemoryViz");
+    setWindowTitle("DFbGraphicsPerf");
 
     m_menu = new QMenuBar(this);
 
@@ -270,7 +270,7 @@ void MainWindow::finished()
 
 void MainWindow::about()
 {
-    QMessageBox::information(this, "DFBVideoMemoryViz", "DirectFB Video Memory Viz, (C) Ilyes Gouta, 2011.\n"
+    QMessageBox::information(this, "DFbGraphicsPerf", "DFbGraphicsPerf, (C) Ilyes Gouta, 2011-2012.\n"
                                                         "Released under the GNU General Public License v3.");
 }
 
