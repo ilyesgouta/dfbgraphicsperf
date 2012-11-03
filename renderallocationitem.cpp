@@ -19,18 +19,15 @@
 
 #include <QPainter>
 
-#include <directfb.h>
-#include <directfb_strings.h>
-
 #define UNUSED_PARAM(a) (a) = (a)
 
 DirectFBPixelFormatNames(pf_names);
 
-RenderAllocationItem::RenderAllocationItem(ControllerScene *scene, CSPEAllocationInfo *info)
+RenderAllocationItem::RenderAllocationItem(ControllerScene *scene, DFBTracingBufferData *data)
 {
     m_age = 0;
     m_scene = scene;
-    m_allocationInfo = *info;
+    m_allocation = *data;
     m_text = 0;
 }
 
@@ -41,13 +38,13 @@ void RenderAllocationItem::paint(QPainter *painter, const QStyleOptionGraphicsIt
     UNUSED_PARAM(option);
     UNUSED_PARAM(widget);
 
-    x1 = (int)(m_allocationInfo.offset * m_scene->aspectRatio()) % (int)m_scene->width();
-    y1 = (int)(m_allocationInfo.offset * m_scene->aspectRatio()) / (int)m_scene->width();
+    x1 = (int)(m_allocation.offset * m_scene->aspectRatio()) % (int)m_scene->width();
+    y1 = (int)(m_allocation.offset * m_scene->aspectRatio()) / (int)m_scene->width();
 
-    x2 = (int)((m_allocationInfo.offset + m_allocationInfo.size) * m_scene->aspectRatio()) % (int)m_scene->width();
-    y2 = (int)((m_allocationInfo.offset + m_allocationInfo.size) * m_scene->aspectRatio()) / (int)m_scene->width();
+    x2 = (int)((m_allocation.offset + m_allocation.size) * m_scene->aspectRatio()) % (int)m_scene->width();
+    y2 = (int)((m_allocation.offset + m_allocation.size) * m_scene->aspectRatio()) / (int)m_scene->width();
 
-    int idx = (DFB_PIXELFORMAT_INDEX(m_allocationInfo.format) * 255) / DFB_NUM_PIXELFORMATS;
+    int idx = (DFB_PIXELFORMAT_INDEX(m_allocation.format) * 255) / DFB_NUM_PIXELFORMATS;
     QColor color = QColor((idx + 32) % 256, (idx + 64) % 256, (idx + 128) % 256);
 
     if (y2 > y1) {
@@ -68,11 +65,11 @@ QRectF RenderAllocationItem::boundingRect () const
     qreal height, width;
     int x1, y1, x2, y2;
 
-    x1 = (int)(m_allocationInfo.offset * m_scene->aspectRatio()) % (int)m_scene->width();
-    y1 = (int)(m_allocationInfo.offset * m_scene->aspectRatio()) / (int)m_scene->width();
+    x1 = (int)(m_allocation.offset * m_scene->aspectRatio()) % (int)m_scene->width();
+    y1 = (int)(m_allocation.offset * m_scene->aspectRatio()) / (int)m_scene->width();
 
-    x2 = (int)((m_allocationInfo.offset + m_allocationInfo.size) * m_scene->aspectRatio()) % (int)m_scene->width();
-    y2 = (int)((m_allocationInfo.offset + m_allocationInfo.size) * m_scene->aspectRatio())/ (int)m_scene->width();
+    x2 = (int)((m_allocation.offset + m_allocation.size) * m_scene->aspectRatio()) % (int)m_scene->width();
+    y2 = (int)((m_allocation.offset + m_allocation.size) * m_scene->aspectRatio())/ (int)m_scene->width();
 
     if (y2 > y1) {
         width = m_scene->width();
@@ -91,12 +88,12 @@ void RenderAllocationItem::setPosition()
 {
     char buf[256];
 
-    int x1 = (int)(m_allocationInfo.offset * m_scene->aspectRatio()) % (int)m_scene->width();
-    int y1 = (int)(m_allocationInfo.offset * m_scene->aspectRatio()) / (int)m_scene->width();
+    int x1 = (int)(m_allocation.offset * m_scene->aspectRatio()) % (int)m_scene->width();
+    int y1 = (int)(m_allocation.offset * m_scene->aspectRatio()) / (int)m_scene->width();
 
     setPos(0, 0);
 
-    sprintf(buf, "%dx%d, %s", m_allocationInfo.width, m_allocationInfo.height, pf_names[DFB_PIXELFORMAT_INDEX(m_allocationInfo.format)].name);
+    sprintf(buf, "%dx%d, %s", m_allocation.width, m_allocation.height, pf_names[DFB_PIXELFORMAT_INDEX(m_allocation.format)].name);
 
     m_text = m_scene->addText(buf);
     m_text->setPos(x1, y1);

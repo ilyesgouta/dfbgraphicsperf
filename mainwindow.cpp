@@ -73,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     memset(&m_info, 0, sizeof(m_info));
 
-    qRegisterMetaType<CSPEPacketEvent>("CSPEPacketEvent");
+    qRegisterMetaType<DFBTracingEventType>("CSPEPacketEvent");
 }
 
 MainWindow::~MainWindow()

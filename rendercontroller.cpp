@@ -24,9 +24,9 @@
 
 #include "renderallocationitem.h"
 
-ControllerScene::ControllerScene(QObject *parent, CSPEAllocationInfo* info) : QGraphicsScene(parent)
+ControllerScene::ControllerScene(QObject *parent, DFBTracingBufferData *info) : QGraphicsScene(parent)
 {
-    m_allocationInfo = *info;
+    m_allocation = *info;
     m_allocationItemsHash.clear();
 
     memset(&m_info, 0, sizeof(m_info));
@@ -38,14 +38,14 @@ void ControllerScene::setSceneRect(const QRectF &rect)
 {
     QGraphicsScene::setSceneRect(rect);
 
-    m_renderAspectRatio = (rect.width() * rect.height()) / m_allocationInfo.pool_size;
+    m_renderAspectRatio = (rect.width() * rect.height()) / m_allocation.poolSize;
 }
 
 void ControllerScene::setSceneRect(qreal x, qreal y, qreal w, qreal h)
 {
     QGraphicsScene::setSceneRect(x, y, w, h);
 
-    m_renderAspectRatio = (w * h) / m_allocationInfo.pool_size;
+    m_renderAspectRatio = (w * h) / m_allocation.poolSize;
 }
 
 float ControllerScene::aspectRatio()
@@ -55,11 +55,11 @@ float ControllerScene::aspectRatio()
 
 void ControllerScene::addItem(RenderAllocationItem *item)
 {
-    m_allocationItemsHash.insert(item->allocationInfo().offset, item);
+    m_allocationItemsHash.insert(item->allocation().offset, item);
     QGraphicsScene::addItem(item);
 
-    m_info.allocated += item->allocationInfo().size;
-    m_info.totalSize = item->allocationInfo().pool_size;
+    m_info.allocated += item->allocation().size;
+    m_info.totalSize = item->allocation().poolSize;
     m_info.usageRatio = (m_info.allocated / (float)m_info.totalSize) * 100;
     m_info.peakUsage = (m_info.peakUsage < m_info.allocated) ? m_info.allocated : m_info.peakUsage;
     m_info.lowestUsage = (m_info.lowestUsage > m_info.allocated) ? m_info.allocated : m_info.lowestUsage;
@@ -69,11 +69,11 @@ void ControllerScene::addItem(RenderAllocationItem *item)
 
 void ControllerScene::removeItem(RenderAllocationItem *item)
 {
-    m_allocationItemsHash.remove(item->allocationInfo().offset);
+    m_allocationItemsHash.remove(item->allocation().offset);
     QGraphicsScene::removeItem(item);
 
-    m_info.allocated -= item->allocationInfo().size;
-    m_info.totalSize = item->allocationInfo().pool_size;
+    m_info.allocated -= item->allocation().size;
+    m_info.totalSize = item->allocation().poolSize;
     m_info.usageRatio = (m_info.allocated / (float)m_info.totalSize) * 100;
     m_info.peakUsage = (m_info.peakUsage < m_info.allocated) ? m_info.allocated : m_info.peakUsage;
     m_info.lowestUsage = (m_info.lowestUsage > m_info.allocated) ? m_info.allocated : m_info.lowestUsage;
@@ -298,7 +298,7 @@ void RenderController::ReceiverThread::run()
         fseek(trace, 0, SEEK_END);
         long size = ftell(trace);
 
-        if (size < (long)sizeof(CSPEPacketEvent)) {
+        if (size < (long)sizeof(DFBTracingPacket)) {
             fclose(trace);
             return;
         }
@@ -307,7 +307,7 @@ void RenderController::ReceiverThread::run()
 
         trackingTraceOffset = m_parent->m_trackingTraceOffset;
 
-        m_parent->m_traceController->setTimeLineMinMax(0, size / sizeof(CSPEPacketEvent));
+        m_parent->m_traceController->setTimeLineMinMax(0, size / sizeof(DFBTracingPacket));
     }
 
     while (m_parent->m_runThread)
@@ -325,16 +325,16 @@ void RenderController::ReceiverThread::run()
             }
 
             if (mode == FAST_REWIND)
-                fseek(trace, -sizeof(CSPEPacketEvent), SEEK_CUR);
+                fseek(trace, -sizeof(DFBTracingPacket), SEEK_CUR);
 
-            s = fread(buf, sizeof(CSPEPacketEvent), 1, trace);
-            s = (s == 1) ? sizeof(CSPEPacketEvent) : 0;
+            s = fread(buf, sizeof(DFBTracingPacket), 1, trace);
+            s = (s == 1) ? sizeof(DFBTracingPacket) : 0;
 
             if (mode == FAST_REWIND)
-                fseek(trace, -sizeof(CSPEPacketEvent), SEEK_CUR);
+                fseek(trace, -sizeof(DFBTracingPacket), SEEK_CUR);
 
             currentPosition = ftell(trace);
-            currentPosition /= sizeof(CSPEPacketEvent);
+            currentPosition /= sizeof(DFBTracingPacket);
 
             if ((mode != NORMAL) && (currentPosition == trackingTraceOffset))
                 mode = NORMAL;
@@ -439,9 +439,9 @@ void RenderController::tracePlaybackEndedEvent()
     }
 }
 
-void RenderController::RenderAllocation(ControllerScene *scene, CSPEAllocationInfo* info)
+void RenderController::renderAllocation(ControllerScene *scene, DFBTracingBufferData* data)
 {
-    RenderAllocationItem *allocationItem = new RenderAllocationItem(scene, info);
+    RenderAllocationItem *allocationItem = new RenderAllocationItem(scene, data);
 
     allocationItem->setPosition();
 
@@ -449,9 +449,9 @@ void RenderController::RenderAllocation(ControllerScene *scene, CSPEAllocationIn
     scene->update();
 }
 
-void RenderController::ReleaseAllocation(ControllerScene *scene, CSPEAllocationInfo* info)
+void RenderController::releaseAllocation(ControllerScene *scene, DFBTracingBufferData* data)
 {
-    RenderAllocationItem* item = scene->lookup(info->offset);
+    RenderAllocationItem* item = scene->lookup(data->offset);
 
     if (item) {
         scene->removeItem(item);
@@ -459,89 +459,89 @@ void RenderController::ReleaseAllocation(ControllerScene *scene, CSPEAllocationI
     }
 }
 
-void RenderController::processFullCapture(char* buf, int size)
+void RenderController::processSnapshotEvent(char* buf, int size)
 {
-    CSPEPacketEvent *packet = reinterpret_cast<CSPEPacketEvent*>(buf);
+    DFBTracingPacket *packet = reinterpret_cast<DFBTracingPacket*>(buf);
 
-    if (packet->payload.full.count)
+    if (packet->Payload.pool.count)
     {
-        CSPEFullInfo* fullMap = &packet->payload.full;
+        DFBTracingPoolData* fullMap = &packet->Payload.pool;
 
-        size -= offsetof(CSPEPacketEvent, payload.full.allocations);
+        size -= offsetof(DFBTracingPacket, Payload.pool.stats);
 
-        for (unsigned int i = 0; (i < fullMap->count) && ((unsigned int)size >= sizeof(CSPEAllocationInfo)); i++)
+        for (unsigned int i = 0; (i < fullMap->count) && ((unsigned int)size >= sizeof(DFBTracingBufferData)); i++)
         {
-            if (!m_controllerSceneMap.contains(fullMap->allocations[i].pool_id))
+            if (!m_controllerSceneMap.contains(fullMap->stats[i].poolId))
             {
-                ControllerScene *scene = new ControllerScene(this, &fullMap->allocations[i]);
-                m_controllerSceneMap.insert(fullMap->allocations[i].pool_id, scene);
+                ControllerScene *scene = new ControllerScene(this, &fullMap->stats[i]);
+                m_controllerSceneMap.insert(fullMap->stats[i].poolId, scene);
 
                 scene->setSceneRect(0, 0, 800, 600);
                 scene->setBackgroundBrush(QBrush(QColor(0, 0, 0)));
                 scene->setForegroundBrush(QBrush(QColor(0, 0, 0)));
 
-                emit newSurfacePool(scene, fullMap->allocations[i].name);
+                emit newSurfacePool(scene, fullMap->stats[i].name);
             }
 
-            RenderAllocation(m_controllerSceneMap.value(fullMap->allocations[i].pool_id), &fullMap->allocations[i]);
-            size -= sizeof(CSPEAllocationInfo);
+            renderAllocation(m_controllerSceneMap.value(fullMap->stats[i].poolId), &fullMap->stats[i]);
+            size -= sizeof(DFBTracingBufferData);
         }
 
         assert(size == 0);
 
         if (size)
-            emit missingInformation(packet->header.nseq);
+            emit missingInformation(packet->header.nSeq);
 
         m_controllerStatus = STATUS_RECEIVING;
     }
 }
 
-void RenderController::partialAllocationEvent(CSPEPacketEvent event)
+void RenderController::allocationEvent(DFBTracingPacket packet)
 {
-    CSPEPartialInfo* partialInfo = &event.payload.partial;
+    DFBTracingBufferData* data = &packet.Payload.buffer;
 
     ControllerScene *scene;
 
-    scene = m_controllerSceneMap.value(partialInfo->allocation.pool_id);
+    scene = m_controllerSceneMap.value(data->poolId);
 
-    if (!m_controllerSceneMap.contains(partialInfo->allocation.pool_id))
+    if (!m_controllerSceneMap.contains(data->poolId))
             assert(!scene);
 
-    if (!scene && !m_controllerSceneMap.contains(partialInfo->allocation.pool_id))
+    if (!scene && !m_controllerSceneMap.contains(data->poolId))
     {
-        scene = new ControllerScene(this, &partialInfo->allocation);
+        scene = new ControllerScene(this, data);
 
-        m_controllerSceneMap.insert(partialInfo->allocation.pool_id, scene);
+        m_controllerSceneMap.insert(data->poolId, scene);
 
         scene->setSceneRect(0, 0, 800, 600);
         scene->setBackgroundBrush(QBrush(QColor(0, 0, 0)));
 
-        emit newSurfacePool(scene, partialInfo->allocation.name);
+        emit newSurfacePool(scene, data->name);
     }
 
-    RenderAllocation(scene, &partialInfo->allocation);
+    renderAllocation(scene, data);
 }
 
-void RenderController::partialReleaseEvent(CSPEPacketEvent event)
+void RenderController::releaseEvent(DFBTracingPacket packet)
 {
-    CSPEPartialInfo* partialInfo = &event.payload.partial;
+    DFBTracingBufferData* data = &packet.Payload.buffer;
 
-    ControllerScene *scene = m_controllerSceneMap.value(partialInfo->allocation.pool_id);
+    ControllerScene *scene = m_controllerSceneMap.value(data->poolId);
 
     if (scene)
-        ReleaseAllocation(scene, &partialInfo->allocation);
+        releaseAllocation(scene, data);
 }
 
-void RenderController::processPartialPacket(char* buf)
+void RenderController::processBufferEvent(char* buf)
 {
-    CSPEPacketEvent *packet = reinterpret_cast<CSPEPacketEvent*>(buf);
+    DFBTracingPacket *packet = reinterpret_cast<DFBTracingPacket*>(buf);
 
-    switch (packet->header.event) {
-    case CSPE_ALLOCATION_EVENT:
-        emit partialAllocation(*packet); // Copy the object before switching the the main thread
+    switch (packet->header.type) {
+    case DTE_POOL_BUFFER_ALLOCATION:
+        emit bufferAllocation(*packet); // Copy the object before switching the the main thread
         break;
-    case CSPE_RELEASE_EVENT:
-        emit partialRelease(*packet); // Copy the object before switching the the main thread
+    case DTE_POOL_BUFFER_RELEASE:
+        emit bufferRelease(*packet); // Copy the object before switching the the main thread
         break;
     default:
         break;
@@ -550,9 +550,9 @@ void RenderController::processPartialPacket(char* buf)
 
 void RenderController::processPacket(char* buf, int size, TracePlaybackMode mode)
 {
-    CSPEPacketHeader *header = reinterpret_cast<CSPEPacketHeader*>(buf);
+    DFBTracingPacket *packet = reinterpret_cast<DFBTracingPacket*>(buf);
 
-    m_currentNseq = header->nseq;
+    m_currentNseq = packet->header.nSeq;
     m_expectedNseq = m_currentNseq + 1;
 
     if (m_saveToFile)
@@ -560,18 +560,20 @@ void RenderController::processPacket(char* buf, int size, TracePlaybackMode mode
 
     switch (m_controllerStatus) {
     case STATUS_SYNCING:
-        if (header->event != CSPE_FULL_CAPTURE_EVENT)
+        if (packet->header.type != DTE_POOL_FULL_SNAPSHOT)
             return;
-        processFullCapture(buf, size);
+
+        processSnapshotEvent(buf, size);
         break;
     case STATUS_RECEIVING:
-        if ((header->event != CSPE_ALLOCATION_EVENT) && (header->event != CSPE_RELEASE_EVENT))
+        if ((packet->header.type != DTE_POOL_BUFFER_ALLOCATION)
+            && (packet->header.type != DTE_POOL_BUFFER_RELEASE))
             return;
 
-        if (mode == FAST_REWIND) // force a release event if we're rewinding the trace
-            header->event = CSPE_RELEASE_EVENT;
+        if (mode == FAST_REWIND) // Force a release event if we're rewinding the trace
+            packet->header.type = DTE_POOL_BUFFER_RELEASE;
 
-        processPartialPacket(buf);
+        processBufferEvent(buf);
         break;
     default:
         break;
@@ -581,10 +583,10 @@ void RenderController::processPacket(char* buf, int size, TracePlaybackMode mode
 void RenderController::packetReceived(char* buf, int size, TracePlaybackMode mode)
 {
     // Inspect the header for the sequence number
-    CSPEPacketHeader *header = reinterpret_cast<CSPEPacketHeader*>(buf);
+    DFBTracingPacket *packet = reinterpret_cast<DFBTracingPacket*>(buf);
 
-    if ((mode != FAST_REWIND) && (header->nseq != m_expectedNseq)) {
-        m_currentNseq = header->nseq;
+    if ((mode != FAST_REWIND) && (packet->header.nSeq != m_expectedNseq)) {
+        m_currentNseq = packet->header.nSeq;
 
         emit lostPackets(m_currentNseq, m_expectedNseq);
         m_expectedNseq = m_currentNseq + 1;
@@ -594,8 +596,8 @@ void RenderController::packetReceived(char* buf, int size, TracePlaybackMode mod
         if (m_controllerStatus == STATUS_IDLE)
             m_controllerStatus = STATUS_RECEIVING; //STATUS_SYNCING;
 
-        if (size != sizeof(CSPEPacketEvent))
-            emit missingInformation(header->nseq);
+        if (size != sizeof(DFBTracingPacket))
+            emit missingInformation(packet->header.nSeq);
         else
             processPacket(buf, size, mode);
     }

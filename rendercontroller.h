@@ -32,7 +32,7 @@
 #include "renderallocationitem.h"
 #include "tracecontrollerdialog.h"
 
-#include <core/cspe_packet.h>
+#include <core/remote_tracing.h>
 
 using namespace std;
 
@@ -48,7 +48,7 @@ class ControllerScene : public QGraphicsScene
 {
     Q_OBJECT
 public:
-    explicit ControllerScene(QObject *parent, CSPEAllocationInfo* info);
+    explicit ControllerScene(QObject *parent, DFBTracingBufferData* info);
 
     void setSceneRect(const QRectF &rect);
     void setSceneRect(qreal x, qreal y, qreal w, qreal h);
@@ -66,7 +66,7 @@ signals:
     void allocationChanged(const ControllerInfo& info);
 
 private:
-    CSPEAllocationInfo m_allocationInfo;
+    DFBTracingBufferData m_allocation;
     ControllerInfo m_info;
 
     QHash<unsigned int, RenderAllocationItem *> m_allocationItemsHash;
@@ -97,8 +97,8 @@ signals:
     void missingInformation(unsigned int nseq);
     void finished();
 
-    void partialAllocation(CSPEPacketEvent event);
-    void partialRelease(CSPEPacketEvent event);
+    void bufferAllocation(DFBTracingPacket packet);
+    void bufferRelease(DFBTracingPacket packet);
 
     void tracePlaybackEnded();
 
@@ -109,8 +109,8 @@ private slots:
     void timeLineTracking(int value);
     void timeLineReleased(int value);
 
-    void partialAllocationEvent(CSPEPacketEvent event);
-    void partialReleaseEvent(CSPEPacketEvent event);
+    void allocationEvent(DFBTracingPacket type);
+    void releaseEvent(DFBTracingPacket type);
 
     void tracePlaybackEndedEvent();
 
@@ -141,11 +141,12 @@ private:
 
     void packetReceived(char* buf, int size, TracePlaybackMode mode);
     void processPacket(char* buf, int size, TracePlaybackMode mode);
-    void processFullCapture(char* buf, int size);
-    void processPartialPacket(char* buf);
 
-    void RenderAllocation(ControllerScene *scene, CSPEAllocationInfo* info);
-    void ReleaseAllocation(ControllerScene *scene, CSPEAllocationInfo* info);
+    void processSnapshotEvent(char* buf, int size);
+    void processBufferEvent(char* buf);
+
+    void renderAllocation(ControllerScene *scene, DFBTracingBufferData* data);
+    void releaseAllocation(ControllerScene *scene, DFBTracingBufferData* data);
 
     QMap<unsigned int, ControllerScene *> m_controllerSceneMap;
 

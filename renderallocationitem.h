@@ -20,16 +20,19 @@
 #include <QGraphicsItem>
 #include <QGraphicsScene>
 
-#include "rendercontroller.h"
+#include <directfb.h>
+#include <directfb_strings.h>
 
-#include <core/cspe_packet.h>
+#include <core/remote_tracing.h>
+
+#include "rendercontroller.h"
 
 class ControllerScene;
 
 class RenderAllocationItem : public QGraphicsItem
 {
 public:
-    explicit RenderAllocationItem(ControllerScene *scene, CSPEAllocationInfo *info);
+    explicit RenderAllocationItem(ControllerScene *scene, DFBTracingBufferData *data);
 
     QRectF boundingRect () const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
@@ -37,7 +40,7 @@ public:
     int elder();
     void setPosition();
 
-    const CSPEAllocationInfo& allocationInfo() { return m_allocationInfo; }
+    const DFBTracingBufferData& allocation() { return m_allocation; }
 
 signals:
 
@@ -50,7 +53,7 @@ private:
 
     ControllerScene *m_scene;
 
-    CSPEAllocationInfo m_allocationInfo;
+    DFBTracingBufferData m_allocation;
 
     float m_renderAspectRatio;
 };
