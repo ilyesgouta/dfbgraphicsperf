@@ -27,20 +27,23 @@
 #define UNUSED_PARAM(a) (a) = (a)
 
 MainWindow::MainWindow(QWidget *parent) :
-    QDialog(parent),
+    QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    QAction *action;
-
     ui->setupUi(this);
 
     setWindowTitle("DFbGraphicsPerf");
 
-    m_menu = new QMenuBar(this);
+    m_vboxLayout = new QVBoxLayout();
 
-    m_fileMenu = m_menu->addMenu("&File");
-    m_traceMenu = m_menu->addMenu("&Trace");
-    m_helpMenu = m_menu->addMenu("&?");
+    m_vboxLayout->addWidget(ui->tabWidget);
+    m_vboxLayout->addWidget(ui->label);
+
+    ui->centralwidget->setLayout(m_vboxLayout);
+
+    m_fileMenu = ui->menubar->addMenu("&File");
+    m_traceMenu = ui->menubar->addMenu("&Trace");
+    m_helpMenu = ui->menubar->addMenu("&?");
 
     m_connectAction = m_fileMenu->addAction("&Connect...");
     connect(m_connectAction, SIGNAL(triggered()), this, SLOT(connectToServer()));
@@ -55,7 +58,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_fileMenu->addSeparator();
 
-    action = m_fileMenu->addAction("&Exit");
+    QAction *action = m_fileMenu->addAction("&Exit");
     connect(action, SIGNAL(triggered()), this, SLOT(exit()));
 
     m_saveToFileAction = m_traceMenu->addAction("&Save trace to file");

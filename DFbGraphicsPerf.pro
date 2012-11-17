@@ -11,20 +11,23 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
     rendertarget.cpp \
     rendercontroller.cpp \
     renderallocationitem.cpp \
-    tracecontrollerdialog.cpp
+    tracecontrollerdialog.cpp \
+    mainwindow.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS  += \
     rendertarget.h \
     rendercontroller.h \
     renderallocationitem.h \
-    tracecontrollerdialog.h
+    tracecontrollerdialog.h \
+    mainwindow2.h \
+    mainwindow.h
 
-FORMS    += mainwindow.ui \
-    tracecontrollerdialog.ui
+FORMS    += \
+    tracecontrollerdialog.ui \
+    mainwindow.ui
 
 INCLUDEPATH += /home/ilyes/DirectFB-git/src
 INCLUDEPATH += /home/ilyes/DirectFB-git/include

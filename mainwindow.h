@@ -17,19 +17,21 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QDialog>
+#include <QMainWindow>
+
 #include <QMenuBar>
 #include <QMenu>
+#include <QVBoxLayout>
 
 namespace Ui {
-    class MainWindow;
+class MainWindow;
 }
 
 #include "rendercontroller.h"
 #include "renderallocationitem.h"
 #include "rendertarget.h"
 
-class MainWindow : public QDialog
+class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
@@ -81,6 +83,8 @@ private:
 
     RenderController *m_renderController;
     ControllerScene *m_connectedSender;
+
+    QVBoxLayout *m_vboxLayout;
 };
 
-#endif // MAINWINDOW_H
+#endif // MAINWINDOW2_H
