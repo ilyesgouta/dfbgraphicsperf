@@ -507,8 +507,9 @@ void RenderController::allocationEvent(DFBTracingPacket packet)
     scene = m_controllerSceneMap.value(data->poolId);
 
     if (!m_controllerSceneMap.contains(data->poolId))
-            assert(!scene);
+        assert(!scene);
 
+    // Create a new ControllerScene if this is a new poolId
     if (!scene && !m_controllerSceneMap.contains(data->poolId))
     {
         scene = new ControllerScene(this, data);
