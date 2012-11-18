@@ -139,7 +139,7 @@ private:
         RenderController *m_parent;
     };
 
-    void packetReceived(char* buf, int size, TracePlaybackMode mode);
+    void receivePacket(char* buf, int size, TracePlaybackMode mode);
     void processPacket(char* buf, int size, TracePlaybackMode mode);
 
     void processSnapshotEvent(char* buf, int size);

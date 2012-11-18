@@ -357,7 +357,7 @@ void RenderController::ReceiverThread::run()
             break;
         }
 
-        m_parent->packetReceived(buf, s, mode);
+        m_parent->receivePacket(buf, s, mode);
     }
 
     m_parent->m_controllerStatus = STATUS_IDLE;
@@ -474,6 +474,7 @@ void RenderController::processSnapshotEvent(char* buf, int size)
             if (!m_controllerSceneMap.contains(fullMap->stats[i].poolId))
             {
                 ControllerScene *scene = new ControllerScene(this, &fullMap->stats[i]);
+
                 m_controllerSceneMap.insert(fullMap->stats[i].poolId, scene);
 
                 scene->setSceneRect(0, 0, 800, 600);
@@ -484,6 +485,7 @@ void RenderController::processSnapshotEvent(char* buf, int size)
             }
 
             renderAllocation(m_controllerSceneMap.value(fullMap->stats[i].poolId), &fullMap->stats[i]);
+
             size -= sizeof(DFBTracingBufferData);
         }
 
@@ -580,7 +582,7 @@ void RenderController::processPacket(char* buf, int size, TracePlaybackMode mode
     }
 }
 
-void RenderController::packetReceived(char* buf, int size, TracePlaybackMode mode)
+void RenderController::receivePacket(char* buf, int size, TracePlaybackMode mode)
 {
     // Inspect the header for the sequence number
     DFBTracingPacket *packet = reinterpret_cast<DFBTracingPacket*>(buf);
@@ -596,7 +598,7 @@ void RenderController::packetReceived(char* buf, int size, TracePlaybackMode mod
         if (m_controllerStatus == STATUS_IDLE)
             m_controllerStatus = STATUS_RECEIVING; //STATUS_SYNCING;
 
-        if (size != sizeof(DFBTracingPacket))
+        if (size != (sizeof(DFBTracingPacketHeader) + packet->header.size))
             emit missingInformation(packet->header.nSeq);
         else
             processPacket(buf, size, mode);
