@@ -62,8 +62,6 @@ private:
 
     void updateStatus();
 
-    QMenuBar *m_menu;
-
     QAction *m_connectAction;
     QAction *m_stopAction;
     QAction *m_saveToFileAction;

@@ -85,7 +85,6 @@ MainWindow::~MainWindow()
 
     delete m_fileMenu;
     delete m_helpMenu;
-    delete m_menu;
 }
 
 void MainWindow::connectToServer()
