@@ -172,6 +172,9 @@ void MainWindow::newSurfacePool(ControllerScene* scene, char* name)
     RenderTarget* renderTarget = new RenderTarget();
     renderTarget->setScene(scene);
 
+    scene->setSceneRect(0, 0, ui->tabWidget->size().width(), ui->tabWidget->size().height());
+    scene->setBackgroundBrush(QBrush(QColor(0, 0, 0)));
+
     renderTarget->setFixedSize(ui->tabWidget->size().width(), ui->tabWidget->size().height());
     renderTarget->setAlignment(Qt::AlignTop);
     renderTarget->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);

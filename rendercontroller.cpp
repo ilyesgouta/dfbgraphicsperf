@@ -515,9 +515,6 @@ void RenderController::allocationEvent(DFBTracingPacket packet)
 
         m_controllerSceneMap.insert(data->poolId, scene);
 
-        scene->setSceneRect(0, 0, 800, 600);
-        scene->setBackgroundBrush(QBrush(QColor(0, 0, 0)));
-
         emit newSurfacePool(scene, data->name);
     }
 
