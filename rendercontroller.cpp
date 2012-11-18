@@ -492,7 +492,7 @@ void RenderController::processSnapshotEvent(char* buf, int size)
         assert(size == 0);
 
         if (size)
-            emit missingInformation(packet->header.nSeq);
+            emit badPacket(packet->header.nSeq);
 
         m_controllerStatus = STATUS_RECEIVING;
     }
