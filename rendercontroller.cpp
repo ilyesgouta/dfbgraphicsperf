@@ -465,26 +465,38 @@ void RenderController::processSnapshotEvent(char* buf, int size)
 
     if (packet->Payload.pool.count)
     {
-        DFBTracingPoolData* fullMap = &packet->Payload.pool;
+        DFBTracingPoolData* pool = &packet->Payload.pool;
+        ControllerScene *scene = 0;
 
-        size -= offsetof(DFBTracingPacket, Payload.pool.stats);
+        // Clear any QGraphicsItem objects already inserted
+        // WARN: assumes all stats belong to the same poolId
+        if (m_controllerSceneMap.contains(pool->stats[0].poolId)) {
+            ControllerScene *scene = m_controllerSceneMap.value(pool->stats[0].poolId);
+            assert(scene);
+            scene->clear();
+        }
 
-        for (unsigned int i = 0; (i < fullMap->count) && ((unsigned int)size >= sizeof(DFBTracingBufferData)); i++)
+        size -= sizeof(DFBTracingPacketHeader);
+        size -= offsetof(DFBTracingPoolData, stats);
+
+        assert(size > 0);
+
+        for (unsigned int i = 0; (i < pool->count) && ((unsigned int)size >= sizeof(DFBTracingBufferData)); i++)
         {
-            if (!m_controllerSceneMap.contains(fullMap->stats[i].poolId))
+            // Create a new ControllerScene if this is a new poolId
+            if (!m_controllerSceneMap.contains(pool->stats[i].poolId))
             {
-                ControllerScene *scene = new ControllerScene(this, &fullMap->stats[i]);
+                scene = new ControllerScene(this, &pool->stats[i]);
 
-                m_controllerSceneMap.insert(fullMap->stats[i].poolId, scene);
+                m_controllerSceneMap.insert(pool->stats[i].poolId, scene);
 
-                scene->setSceneRect(0, 0, 800, 600);
-                scene->setBackgroundBrush(QBrush(QColor(0, 0, 0)));
-                scene->setForegroundBrush(QBrush(QColor(0, 0, 0)));
+                emit newSurfacePool(scene, pool->stats[i].name);
+            } else
+                scene = m_controllerSceneMap.value(pool->stats[i].poolId);
 
-                emit newSurfacePool(scene, fullMap->stats[i].name);
-            }
+            assert(scene);
 
-            renderAllocation(m_controllerSceneMap.value(fullMap->stats[i].poolId), &fullMap->stats[i]);
+            renderAllocation(scene, &pool->stats[i]);
 
             size -= sizeof(DFBTracingBufferData);
         }
