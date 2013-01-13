@@ -53,7 +53,7 @@ private slots:
     void lostPackets(unsigned int lastValidNseq, unsigned int expectedNseq);
     void missingInformation(unsigned int nseq);
     void finished();
-    void allocationChanged(const ControllerInfo& info);
+    void statusChanged(const ControllerInfo& info);
 
     void tabChanged(int i);
 

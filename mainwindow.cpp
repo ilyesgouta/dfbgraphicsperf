@@ -180,10 +180,13 @@ void MainWindow::newRenderTarget(ControllerScene* scene, char* name)
     renderTarget->setAlignment(Qt::AlignTop);
     renderTarget->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
 
-    if (m_connectedSender)
-        assert(disconnect(m_connectedSender, SIGNAL(allocationChanged(const ControllerInfo&)), this, SLOT(allocationChanged(const ControllerInfo&))));
+    if (m_connectedSender) {
+        ret = disconnect(m_connectedSender, SIGNAL(statusChanged(const ControllerInfo&)), this, SLOT(statusChanged(const ControllerInfo&)));
+        assert(ret == true);
+    }
 
-    assert(connect(scene, SIGNAL(allocationChanged(const ControllerInfo&)), this, SLOT(allocationChanged(const ControllerInfo&)), Qt::UniqueConnection));
+    ret = connect(scene, SIGNAL(statusChanged(const ControllerInfo&)), this, SLOT(statusChanged(const ControllerInfo&)), Qt::UniqueConnection);
+    assert(ret == true);
 
     m_connectedSender = scene;
 
@@ -228,7 +231,7 @@ void MainWindow::lostPackets(unsigned int lastValidNseq, unsigned int expectedNs
     updateStatus();
 }
 
-void MainWindow::allocationChanged(const ControllerInfo& info)
+void MainWindow::statusChanged(const ControllerInfo& info)
 {
     m_info = info;
 
@@ -250,6 +253,8 @@ void MainWindow::updateStatus()
 
 void MainWindow::tabChanged(int i)
 {
+    bool ret;
+
     if (i < 0)
         return;
 
@@ -257,13 +262,16 @@ void MainWindow::tabChanged(int i)
 
     if (target && target->scene())
     {
-        if (m_connectedSender)
-            assert(disconnect(m_connectedSender, SIGNAL(allocationChanged(const ControllerInfo&)), this, SLOT(allocationChanged(const ControllerInfo&))));
+        if (m_connectedSender) {
+            ret = disconnect(m_connectedSender, SIGNAL(statusChanged(const ControllerInfo&)), this, SLOT(statusChanged(const ControllerInfo&)));
+            assert(ret == true);
+        }
 
         m_info = static_cast<ControllerScene*>(target->scene())->getInfo();
         updateStatus();
 
-        assert(connect(target->scene(), SIGNAL(allocationChanged(const ControllerInfo&)), this, SLOT(allocationChanged(const ControllerInfo&)), Qt::UniqueConnection));
+        ret = connect(target->scene(), SIGNAL(statusChanged(const ControllerInfo&)), this, SLOT(statusChanged(const ControllerInfo&)), Qt::UniqueConnection);
+        assert(ret == true);
 
         m_connectedSender = static_cast<ControllerScene*>(target->scene());
     }
