@@ -25,13 +25,13 @@
 
 #include <core/remote_tracing.h>
 
-#include "controllerscene.h"
+#include "scenecontroller.h"
 #include "allocationrendercontroller.h"
 
 class AllocationRenderItem : public QGraphicsItem
 {
 public:
-    explicit AllocationRenderItem(ControllerScene *scene, DFBTracingBufferData *data);
+    explicit AllocationRenderItem(SceneController *scene, DFBTracingBufferData *data);
 
     QRectF boundingRect () const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
@@ -50,7 +50,7 @@ private:
 
     QGraphicsTextItem *m_text;
 
-    ControllerScene *m_scene;
+    SceneController *m_scene;
 
     DFBTracingBufferData m_allocation;
 

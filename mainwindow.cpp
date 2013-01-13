@@ -120,7 +120,7 @@ void MainWindow::connectToServer()
 
     m_renderController = new AllocationRenderController(serverIpAddr, serverPort, m_saveToFileAction->isChecked());
 
-    connect(m_renderController, SIGNAL(newSurfacePool(ControllerScene*, char*)), this, SLOT(newSurfacePool(ControllerScene*, char*)));
+    connect(m_renderController, SIGNAL(newSurfacePool(SceneController*, char*)), this, SLOT(newSurfacePool(SceneController*, char*)));
     connect(m_renderController, SIGNAL(missingInformation(unsigned int)), this, SLOT(missingInformation(unsigned int)));
     connect(m_renderController, SIGNAL(lostPackets(unsigned int, unsigned int)), this, SLOT(lostPackets(unsigned int, unsigned int)));
     connect(m_renderController, SIGNAL(finished()), this, SLOT(finished()));
@@ -150,7 +150,7 @@ void MainWindow::playbackTrace()
 
     m_renderController = new AllocationRenderController(traceName, 240);
 
-    connect(m_renderController, SIGNAL(newRenderTarget(ControllerScene*, char*)), this, SLOT(newRenderTarget(ControllerScene*, char*)));
+    connect(m_renderController, SIGNAL(newRenderTarget(SceneController*, char*)), this, SLOT(newRenderTarget(SceneController*, char*)));
     connect(m_renderController, SIGNAL(missingInformation(unsigned int)), this, SLOT(missingInformation(unsigned int)));
     connect(m_renderController, SIGNAL(lostPackets(unsigned int, unsigned int)), this, SLOT(lostPackets(unsigned int, unsigned int)));
     connect(m_renderController, SIGNAL(finished()), this, SLOT(finished()));
@@ -168,7 +168,7 @@ void MainWindow::playbackTrace()
     m_renderController->renderTrace();
 }
 
-void MainWindow::newRenderTarget(ControllerScene* scene, char* name)
+void MainWindow::newRenderTarget(SceneController* scene, char* name)
 {
     char buf[256];
     bool ret;
@@ -270,13 +270,13 @@ void MainWindow::tabChanged(int i)
             assert(ret == true);
         }
 
-        m_info = static_cast<ControllerScene*>(target->scene())->getInfo();
+        m_info = static_cast<SceneController*>(target->scene())->getInfo();
         updateStatus();
 
         ret = connect(target->scene(), SIGNAL(statusChanged(const ControllerInfo&)), this, SLOT(statusChanged(const ControllerInfo&)), Qt::UniqueConnection);
         assert(ret == true);
 
-        m_connectedSender = static_cast<ControllerScene*>(target->scene());
+        m_connectedSender = static_cast<SceneController*>(target->scene());
     }
 }
 

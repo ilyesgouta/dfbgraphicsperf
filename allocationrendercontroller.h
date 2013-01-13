@@ -29,7 +29,7 @@ using namespace std;
 #include "allocationrenderitem.h"
 #include "tracecontrollerdialog.h"
 
-class ControllerScene;
+class SceneController;
 class TraceControllerDialog;
 
 class AllocationRenderController : public QObject
@@ -48,7 +48,7 @@ public:
     void saveTraceToFile(bool save);
 
 signals:
-    void newSurfacePool(ControllerScene* scene, char* name);
+    void newSurfacePool(SceneController* scene, char* name);
     void lostPackets(unsigned int lastValidNseq, unsigned int expectedNseq);
     void badPacket(unsigned int nseq);
     void missingInformation(unsigned int nseq);
@@ -102,10 +102,10 @@ private:
     void processSnapshotEvent(char* buf, int size);
     void processBufferEvent(char* buf);
 
-    void renderAllocation(ControllerScene *scene, DFBTracingBufferData* data);
-    void releaseAllocation(ControllerScene *scene, DFBTracingBufferData* data);
+    void renderAllocation(SceneController *scene, DFBTracingBufferData* data);
+    void releaseAllocation(SceneController *scene, DFBTracingBufferData* data);
 
-    QMap<unsigned int, ControllerScene *> m_controllerSceneMap;
+    QMap<unsigned int, SceneController *> m_controllerSceneMap;
 
     QString m_ipAddr;
     int m_port;

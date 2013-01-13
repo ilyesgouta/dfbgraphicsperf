@@ -23,7 +23,7 @@
 
 DirectFBPixelFormatNames(pf_names);
 
-AllocationRenderItem::AllocationRenderItem(ControllerScene *scene, DFBTracingBufferData *data)
+AllocationRenderItem::AllocationRenderItem(SceneController *scene, DFBTracingBufferData *data)
 {
     m_age = 0;
     m_scene = scene;

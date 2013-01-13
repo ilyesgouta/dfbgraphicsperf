@@ -14,18 +14,18 @@ SOURCES += main.cpp\
     rendertarget.cpp \
     tracecontrollerdialog.cpp \
     mainwindow.cpp \
-    controllerscene.cpp \
     allocationrendercontroller.cpp \
-    allocationrenderitem.cpp
+    allocationrenderitem.cpp \
+    scenecontroller.cpp
 
 HEADERS  += \
     rendertarget.h \
     tracecontrollerdialog.h \
     mainwindow2.h \
     mainwindow.h \
-    controllerscene.h \
     allocationrendercontroller.h \
-    allocationrenderitem.h
+    allocationrenderitem.h \
+    scenecontroller.h
 
 FORMS    += \
     tracecontrollerdialog.ui \

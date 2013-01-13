@@ -174,8 +174,8 @@ void AllocationRenderController::disconnect()
         m_receiver = 0;
     }
 
-    QList<ControllerScene*> scenes = m_controllerSceneMap.values();
-    for (QList<ControllerScene*>::iterator it = scenes.begin(); it != scenes.end(); ++it)
+    QList<SceneController*> scenes = m_controllerSceneMap.values();
+    for (QList<SceneController*>::iterator it = scenes.begin(); it != scenes.end(); ++it)
         delete (*it);
 
     m_controllerSceneMap.clear();
@@ -371,7 +371,7 @@ void AllocationRenderController::tracePlaybackEndedEvent()
     }
 }
 
-void AllocationRenderController::renderAllocation(ControllerScene *scene, DFBTracingBufferData* data)
+void AllocationRenderController::renderAllocation(SceneController *scene, DFBTracingBufferData* data)
 {
     AllocationRenderItem *allocationItem = new AllocationRenderItem(scene, data);
 
@@ -381,7 +381,7 @@ void AllocationRenderController::renderAllocation(ControllerScene *scene, DFBTra
     scene->update();
 }
 
-void AllocationRenderController::releaseAllocation(ControllerScene *scene, DFBTracingBufferData* data)
+void AllocationRenderController::releaseAllocation(SceneController *scene, DFBTracingBufferData* data)
 {
     AllocationRenderItem* item = scene->lookup(data->offset);
 
@@ -398,12 +398,12 @@ void AllocationRenderController::processSnapshotEvent(char* buf, int size)
     if (packet->Payload.pool.count)
     {
         DFBTracingPoolData* pool = &packet->Payload.pool;
-        ControllerScene *scene = 0;
+        SceneController *scene = 0;
 
         // Clear any QGraphicsItem objects already inserted
         // WARN: assumes all stats belong to the same poolId
         if (m_controllerSceneMap.contains(pool->stats[0].poolId)) {
-            ControllerScene *scene = m_controllerSceneMap.value(pool->stats[0].poolId);
+            SceneController *scene = m_controllerSceneMap.value(pool->stats[0].poolId);
             assert(scene);
             scene->clear();
         }
@@ -418,7 +418,7 @@ void AllocationRenderController::processSnapshotEvent(char* buf, int size)
             // Create a new ControllerScene if this is a new poolId
             if (!m_controllerSceneMap.contains(pool->stats[i].poolId))
             {
-                scene = new ControllerScene(this, &pool->stats[i]);
+                scene = new SceneController(this, &pool->stats[i]);
 
                 m_controllerSceneMap.insert(pool->stats[i].poolId, scene);
 
@@ -446,7 +446,7 @@ void AllocationRenderController::allocationEvent(DFBTracingPacket packet)
 {
     DFBTracingBufferData* data = &packet.Payload.buffer;
 
-    ControllerScene *scene;
+    SceneController *scene;
 
     scene = m_controllerSceneMap.value(data->poolId);
 
@@ -456,7 +456,7 @@ void AllocationRenderController::allocationEvent(DFBTracingPacket packet)
     // Create a new ControllerScene if this is a new poolId
     if (!scene && !m_controllerSceneMap.contains(data->poolId))
     {
-        scene = new ControllerScene(this, data);
+        scene = new SceneController(this, data);
 
         m_controllerSceneMap.insert(data->poolId, scene);
 
@@ -470,7 +470,7 @@ void AllocationRenderController::releaseEvent(DFBTracingPacket packet)
 {
     DFBTracingBufferData* data = &packet.Payload.buffer;
 
-    ControllerScene *scene = m_controllerSceneMap.value(data->poolId);
+    SceneController *scene = m_controllerSceneMap.value(data->poolId);
 
     if (scene)
         releaseAllocation(scene, data);

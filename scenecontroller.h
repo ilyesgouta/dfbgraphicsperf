@@ -34,11 +34,11 @@ typedef struct ControllerInfo {
     float usageRatio;
 } ControllerInfo;
 
-class ControllerScene : public QGraphicsScene
+class SceneController : public QGraphicsScene
 {
     Q_OBJECT
 public:
-    explicit ControllerScene(QObject *parent, DFBTracingBufferData* info);
+    explicit SceneController(QObject *parent, DFBTracingBufferData* info);
 
     void setSceneRect(const QRectF &rect);
     void setSceneRect(qreal x, qreal y, qreal w, qreal h);

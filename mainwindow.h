@@ -27,7 +27,7 @@ namespace Ui {
 class MainWindow;
 }
 
-#include "controllerscene.h"
+#include "scenecontroller.h"
 #include "allocationrendercontroller.h"
 
 class MainWindow : public QMainWindow
@@ -48,7 +48,7 @@ private slots:
     void saveToFile();
     void playbackTrace();
 
-    void newRenderTarget(ControllerScene *scene, char* name);
+    void newRenderTarget(SceneController *scene, char* name);
     void lostPackets(unsigned int lastValidNseq, unsigned int expectedNseq);
     void missingInformation(unsigned int nseq);
     void finished();
@@ -79,7 +79,7 @@ private:
     unsigned int m_lostPackets;
 
     AllocationRenderController *m_renderController;
-    ControllerScene *m_connectedSender;
+    SceneController *m_connectedSender;
 
     QVBoxLayout *m_vboxLayout;
 };

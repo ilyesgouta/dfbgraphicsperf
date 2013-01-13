@@ -20,10 +20,10 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "controllerscene.h"
+#include "scenecontroller.h"
 #include "allocationrenderitem.h"
 
-ControllerScene::ControllerScene(QObject *parent, DFBTracingBufferData *info) : QGraphicsScene(parent)
+SceneController::SceneController(QObject *parent, DFBTracingBufferData *info) : QGraphicsScene(parent)
 {
     m_allocation = *info;
     m_allocationItemsHash.clear();
@@ -33,26 +33,26 @@ ControllerScene::ControllerScene(QObject *parent, DFBTracingBufferData *info) : 
     m_info.lowestUsage = 0xffffffff;
 }
 
-void ControllerScene::setSceneRect(const QRectF &rect)
+void SceneController::setSceneRect(const QRectF &rect)
 {
     QGraphicsScene::setSceneRect(rect);
 
     m_renderAspectRatio = (rect.width() * rect.height()) / m_allocation.poolSize;
 }
 
-void ControllerScene::setSceneRect(qreal x, qreal y, qreal w, qreal h)
+void SceneController::setSceneRect(qreal x, qreal y, qreal w, qreal h)
 {
     QGraphicsScene::setSceneRect(x, y, w, h);
 
     m_renderAspectRatio = (w * h) / m_allocation.poolSize;
 }
 
-float ControllerScene::aspectRatio()
+float SceneController::aspectRatio()
 {
     return m_renderAspectRatio;
 }
 
-void ControllerScene::addItem(AllocationRenderItem *item)
+void SceneController::addItem(AllocationRenderItem *item)
 {
     m_allocationItemsHash.insert(item->allocation().offset, item);
     QGraphicsScene::addItem(item);
@@ -66,7 +66,7 @@ void ControllerScene::addItem(AllocationRenderItem *item)
     emit allocationChanged(m_info);
 }
 
-void ControllerScene::removeItem(AllocationRenderItem *item)
+void SceneController::removeItem(AllocationRenderItem *item)
 {
     m_allocationItemsHash.remove(item->allocation().offset);
     QGraphicsScene::removeItem(item);
@@ -80,12 +80,12 @@ void ControllerScene::removeItem(AllocationRenderItem *item)
     emit allocationChanged(m_info);
 }
 
-AllocationRenderItem* ControllerScene::lookup(unsigned int offset)
+AllocationRenderItem* SceneController::lookup(unsigned int offset)
 {
     return m_allocationItemsHash.value(offset);
 }
 
-const ControllerInfo& ControllerScene::getInfo()
+const ControllerInfo& SceneController::getInfo()
 {
     return (m_info);
 }
