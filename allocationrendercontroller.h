@@ -32,13 +32,13 @@ using namespace std;
 class ControllerScene;
 class TraceControllerDialog;
 
-class RenderController : public QObject
+class AllocationRenderController : public QObject
 {
     Q_OBJECT
 public:
-    explicit RenderController(QString ipAddr, int port, bool saveToFile);
-    explicit RenderController(QString traceFile, int period_ms);
-    ~RenderController();
+    explicit AllocationRenderController(QString ipAddr, int port, bool saveToFile);
+    explicit AllocationRenderController(QString traceFile, int period_ms);
+    ~AllocationRenderController();
 
     bool connect();
     bool renderTrace();
@@ -87,13 +87,13 @@ private:
 
     class ReceiverThread : public QThread {
     public:
-        ReceiverThread(RenderController* parent);
+        ReceiverThread(AllocationRenderController* parent);
         ~ReceiverThread();
 
         void run();
 
     private:
-        RenderController *m_parent;
+        AllocationRenderController *m_parent;
     };
 
     void receivePacket(char* buf, int size, TracePlaybackMode mode);

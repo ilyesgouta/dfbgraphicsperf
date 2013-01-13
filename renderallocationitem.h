@@ -26,7 +26,7 @@
 #include <core/remote_tracing.h>
 
 #include "controllerscene.h"
-#include "rendercontroller.h"
+#include "allocationrendercontroller.h"
 
 class RenderAllocationItem : public QGraphicsItem
 {

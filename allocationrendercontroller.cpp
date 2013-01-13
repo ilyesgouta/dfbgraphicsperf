@@ -14,18 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "rendercontroller.h"
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <assert.h>
 
-#include "rendercontroller.h"
+#include "allocationrendercontroller.h"
 #include "renderallocationitem.h"
 
-RenderController::RenderController(QString ipAddr, int port, bool saveToFile)
+AllocationRenderController::AllocationRenderController(QString ipAddr, int port, bool saveToFile)
 {
     m_ipAddr = ipAddr;
     m_port = port;
@@ -51,7 +49,7 @@ RenderController::RenderController(QString ipAddr, int port, bool saveToFile)
     }
 }
 
-RenderController::RenderController(QString traceFile, int period) : m_renderingSemaphore(1)
+AllocationRenderController::AllocationRenderController(QString traceFile, int period) : m_renderingSemaphore(1)
 {
     m_ipAddr = "";
     m_port = -1;
@@ -66,13 +64,13 @@ RenderController::RenderController(QString traceFile, int period) : m_renderingS
     m_currentNseq = m_expectedNseq = 0;
 }
 
-RenderController::~RenderController()
+AllocationRenderController::~AllocationRenderController()
 {
     if (m_runThread)
         disconnect();
 }
 
-void RenderController::saveTraceToFile(bool save)
+void AllocationRenderController::saveTraceToFile(bool save)
 {
     if (!m_saveToFile && save) {
         char buf[64];
@@ -91,7 +89,7 @@ void RenderController::saveTraceToFile(bool save)
     m_saveToFile = save;
 }
 
-bool RenderController::connect()
+bool AllocationRenderController::connect()
 {
     struct sockaddr_in addrIn;
 
@@ -127,7 +125,7 @@ bool RenderController::connect()
     return true;
 }
 
-bool RenderController::renderTrace()
+bool AllocationRenderController::renderTrace()
 {
     m_port = -1;
 
@@ -156,7 +154,7 @@ bool RenderController::renderTrace()
     return true;
 }
 
-void RenderController::disconnect()
+void AllocationRenderController::disconnect()
 {
     if (m_runThread) {
         m_runThread = false;
@@ -194,7 +192,7 @@ void RenderController::disconnect()
     }
 }
 
-RenderController::ReceiverThread::ReceiverThread(RenderController *parent)
+AllocationRenderController::ReceiverThread::ReceiverThread(AllocationRenderController *parent)
 {
     m_parent = parent;
 
@@ -202,13 +200,13 @@ RenderController::ReceiverThread::ReceiverThread(RenderController *parent)
     QObject::connect(m_parent, SIGNAL(partialRelease(CSPEPacketEvent)), m_parent, SLOT(partialReleaseEvent(CSPEPacketEvent)));
 }
 
-RenderController::ReceiverThread::~ReceiverThread()
+AllocationRenderController::ReceiverThread::~ReceiverThread()
 {
     QObject::disconnect(m_parent, SIGNAL(partialAllocation(CSPEPacketEvent)));
     QObject::disconnect(m_parent, SIGNAL(partialRelease(CSPEPacketEvent)));
 }
 
-void RenderController::ReceiverThread::run()
+void AllocationRenderController::ReceiverThread::run()
 {
     FILE* trace = NULL;
     int trackingTraceOffset, currentPosition = 0;
@@ -305,12 +303,12 @@ void RenderController::ReceiverThread::run()
     emit m_parent->tracePlaybackEnded();
 }
 
-void RenderController::changeRenderPace(int value)
+void AllocationRenderController::changeRenderPace(int value)
 {
     m_renderPeriod = value;
 }
 
-void RenderController::pauseTraceRendering()
+void AllocationRenderController::pauseTraceRendering()
 {
     if (m_receiver && !m_isPaused) {
         m_renderingSemaphore.acquire();
@@ -318,7 +316,7 @@ void RenderController::pauseTraceRendering()
     }
 }
 
-void RenderController::resumeTraceRendering()
+void AllocationRenderController::resumeTraceRendering()
 {
     if (!m_receiver)
     {
@@ -339,12 +337,12 @@ void RenderController::resumeTraceRendering()
     }
 }
 
-void RenderController::timeLineTracking(int value)
+void AllocationRenderController::timeLineTracking(int value)
 {
     m_isTracking = true;
 }
 
-void RenderController::timeLineReleased(int value)
+void AllocationRenderController::timeLineReleased(int value)
 {
     m_isTracking = false;
 
@@ -357,7 +355,7 @@ void RenderController::timeLineReleased(int value)
         m_renderingSemaphore.release();
 }
 
-void RenderController::tracePlaybackEndedEvent()
+void AllocationRenderController::tracePlaybackEndedEvent()
 {
     if (m_receiver)
     {
@@ -373,7 +371,7 @@ void RenderController::tracePlaybackEndedEvent()
     }
 }
 
-void RenderController::renderAllocation(ControllerScene *scene, DFBTracingBufferData* data)
+void AllocationRenderController::renderAllocation(ControllerScene *scene, DFBTracingBufferData* data)
 {
     RenderAllocationItem *allocationItem = new RenderAllocationItem(scene, data);
 
@@ -383,7 +381,7 @@ void RenderController::renderAllocation(ControllerScene *scene, DFBTracingBuffer
     scene->update();
 }
 
-void RenderController::releaseAllocation(ControllerScene *scene, DFBTracingBufferData* data)
+void AllocationRenderController::releaseAllocation(ControllerScene *scene, DFBTracingBufferData* data)
 {
     RenderAllocationItem* item = scene->lookup(data->offset);
 
@@ -393,7 +391,7 @@ void RenderController::releaseAllocation(ControllerScene *scene, DFBTracingBuffe
     }
 }
 
-void RenderController::processSnapshotEvent(char* buf, int size)
+void AllocationRenderController::processSnapshotEvent(char* buf, int size)
 {
     DFBTracingPacket *packet = reinterpret_cast<DFBTracingPacket*>(buf);
 
@@ -444,7 +442,7 @@ void RenderController::processSnapshotEvent(char* buf, int size)
     }
 }
 
-void RenderController::allocationEvent(DFBTracingPacket packet)
+void AllocationRenderController::allocationEvent(DFBTracingPacket packet)
 {
     DFBTracingBufferData* data = &packet.Payload.buffer;
 
@@ -468,7 +466,7 @@ void RenderController::allocationEvent(DFBTracingPacket packet)
     renderAllocation(scene, data);
 }
 
-void RenderController::releaseEvent(DFBTracingPacket packet)
+void AllocationRenderController::releaseEvent(DFBTracingPacket packet)
 {
     DFBTracingBufferData* data = &packet.Payload.buffer;
 
@@ -478,7 +476,7 @@ void RenderController::releaseEvent(DFBTracingPacket packet)
         releaseAllocation(scene, data);
 }
 
-void RenderController::processBufferEvent(char* buf)
+void AllocationRenderController::processBufferEvent(char* buf)
 {
     DFBTracingPacket *packet = reinterpret_cast<DFBTracingPacket*>(buf);
 
@@ -494,7 +492,7 @@ void RenderController::processBufferEvent(char* buf)
     }
 }
 
-void RenderController::processPacket(char* buf, int size, TracePlaybackMode mode)
+void AllocationRenderController::processPacket(char* buf, int size, TracePlaybackMode mode)
 {
     DFBTracingPacket *packet = reinterpret_cast<DFBTracingPacket*>(buf);
 
@@ -526,7 +524,7 @@ void RenderController::processPacket(char* buf, int size, TracePlaybackMode mode
     }
 }
 
-void RenderController::receivePacket(char* buf, int size, TracePlaybackMode mode)
+void AllocationRenderController::receivePacket(char* buf, int size, TracePlaybackMode mode)
 {
     // Inspect the header for the sequence number
     DFBTracingPacket *packet = reinterpret_cast<DFBTracingPacket*>(buf);

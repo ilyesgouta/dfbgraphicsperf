@@ -17,9 +17,7 @@
 #include "tracecontrollerdialog.h"
 #include "ui_tracecontrollerdialog.h"
 
-#include "rendercontroller.h"
-
-TraceControllerDialog::TraceControllerDialog(RenderController *controller, int period) :
+TraceControllerDialog::TraceControllerDialog(AllocationRenderController *controller, int period) :
     QDialog(0),
     ui(new Ui::TraceControllerDialog)
 {

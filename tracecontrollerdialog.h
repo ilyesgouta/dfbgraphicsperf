@@ -19,18 +19,20 @@
 
 #include <QDialog>
 
+#include "allocationrendercontroller.h"
+
 namespace Ui {
     class TraceControllerDialog;
 }
 
-class RenderController;
+class AllocationRenderController;
 
 class TraceControllerDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    TraceControllerDialog(RenderController *controller, int period);
+    TraceControllerDialog(AllocationRenderController *controller, int period);
     ~TraceControllerDialog();
 
     void setTimeLineMinMax(int min, int max);
@@ -54,7 +56,7 @@ private slots:
 private:
     Ui::TraceControllerDialog *ui;
 
-    RenderController *m_parent;
+    AllocationRenderController *m_parent;
 
     int m_max;
 };

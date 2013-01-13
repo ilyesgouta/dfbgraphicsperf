@@ -12,20 +12,20 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
     rendertarget.cpp \
-    rendercontroller.cpp \
     renderallocationitem.cpp \
     tracecontrollerdialog.cpp \
     mainwindow.cpp \
-    controllerscene.cpp
+    controllerscene.cpp \
+    allocationrendercontroller.cpp
 
 HEADERS  += \
     rendertarget.h \
-    rendercontroller.h \
     renderallocationitem.h \
     tracecontrollerdialog.h \
     mainwindow2.h \
     mainwindow.h \
-    controllerscene.h
+    controllerscene.h \
+    allocationrendercontroller.h
 
 FORMS    += \
     tracecontrollerdialog.ui \

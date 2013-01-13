@@ -24,6 +24,7 @@
 
 #include <assert.h>
 
+#include "allocationrendercontroller.h"
 #include "rendertarget.h"
 
 #define UNUSED_PARAM(a) (a) = (a)
@@ -117,7 +118,7 @@ void MainWindow::connectToServer()
     if (list.length() != 4)
         return;
 
-    m_renderController = new RenderController(serverIpAddr, serverPort, m_saveToFileAction->isChecked());
+    m_renderController = new AllocationRenderController(serverIpAddr, serverPort, m_saveToFileAction->isChecked());
 
     connect(m_renderController, SIGNAL(newSurfacePool(ControllerScene*, char*)), this, SLOT(newSurfacePool(ControllerScene*, char*)));
     connect(m_renderController, SIGNAL(missingInformation(unsigned int)), this, SLOT(missingInformation(unsigned int)));
@@ -147,7 +148,7 @@ void MainWindow::playbackTrace()
     if (!traceName.length())
         return;
 
-    m_renderController = new RenderController(traceName, 240);
+    m_renderController = new AllocationRenderController(traceName, 240);
 
     connect(m_renderController, SIGNAL(newRenderTarget(ControllerScene*, char*)), this, SLOT(newRenderTarget(ControllerScene*, char*)));
     connect(m_renderController, SIGNAL(missingInformation(unsigned int)), this, SLOT(missingInformation(unsigned int)));

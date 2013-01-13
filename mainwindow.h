@@ -28,7 +28,7 @@ class MainWindow;
 }
 
 #include "controllerscene.h"
-#include "rendercontroller.h"
+#include "allocationrendercontroller.h"
 
 class MainWindow : public QMainWindow
 {
@@ -78,7 +78,7 @@ private:
     ControllerInfo m_info;
     unsigned int m_lostPackets;
 
-    RenderController *m_renderController;
+    AllocationRenderController *m_renderController;
     ControllerScene *m_connectedSender;
 
     QVBoxLayout *m_vboxLayout;
