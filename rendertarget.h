@@ -19,8 +19,6 @@
 
 #include <QGraphicsView>
 
-#include "rendercontroller.h"
-
 class RenderTarget : public QGraphicsView
 {
     Q_OBJECT

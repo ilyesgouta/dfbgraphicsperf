@@ -22,74 +22,8 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "rendercontroller.h"
 #include "renderallocationitem.h"
-
-ControllerScene::ControllerScene(QObject *parent, DFBTracingBufferData *info) : QGraphicsScene(parent)
-{
-    m_allocation = *info;
-    m_allocationItemsHash.clear();
-
-    memset(&m_info, 0, sizeof(m_info));
-
-    m_info.lowestUsage = 0xffffffff;
-}
-
-void ControllerScene::setSceneRect(const QRectF &rect)
-{
-    QGraphicsScene::setSceneRect(rect);
-
-    m_renderAspectRatio = (rect.width() * rect.height()) / m_allocation.poolSize;
-}
-
-void ControllerScene::setSceneRect(qreal x, qreal y, qreal w, qreal h)
-{
-    QGraphicsScene::setSceneRect(x, y, w, h);
-
-    m_renderAspectRatio = (w * h) / m_allocation.poolSize;
-}
-
-float ControllerScene::aspectRatio()
-{
-    return m_renderAspectRatio;
-}
-
-void ControllerScene::addItem(RenderAllocationItem *item)
-{
-    m_allocationItemsHash.insert(item->allocation().offset, item);
-    QGraphicsScene::addItem(item);
-
-    m_info.allocated += item->allocation().size;
-    m_info.totalSize = item->allocation().poolSize;
-    m_info.usageRatio = (m_info.allocated / (float)m_info.totalSize) * 100;
-    m_info.peakUsage = (m_info.peakUsage < m_info.allocated) ? m_info.allocated : m_info.peakUsage;
-    m_info.lowestUsage = (m_info.lowestUsage > m_info.allocated) ? m_info.allocated : m_info.lowestUsage;
-
-    emit allocationChanged(m_info);
-}
-
-void ControllerScene::removeItem(RenderAllocationItem *item)
-{
-    m_allocationItemsHash.remove(item->allocation().offset);
-    QGraphicsScene::removeItem(item);
-
-    m_info.allocated -= item->allocation().size;
-    m_info.totalSize = item->allocation().poolSize;
-    m_info.usageRatio = (m_info.allocated / (float)m_info.totalSize) * 100;
-    m_info.peakUsage = (m_info.peakUsage < m_info.allocated) ? m_info.allocated : m_info.peakUsage;
-    m_info.lowestUsage = (m_info.lowestUsage > m_info.allocated) ? m_info.allocated : m_info.lowestUsage;
-
-    emit allocationChanged(m_info);
-}
-
-RenderAllocationItem* ControllerScene::lookup(unsigned int offset)
-{
-    return m_allocationItemsHash.value(offset);
-}
-
-const ControllerInfo& ControllerScene::getInfo()
-{
-    return (m_info);
-}
 
 RenderController::RenderController(QString ipAddr, int port, bool saveToFile)
 {

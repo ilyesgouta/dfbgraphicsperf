@@ -24,6 +24,8 @@
 
 #include <assert.h>
 
+#include "rendertarget.h"
+
 #define UNUSED_PARAM(a) (a) = (a)
 
 MainWindow::MainWindow(QWidget *parent) :

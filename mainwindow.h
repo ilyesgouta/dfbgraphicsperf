@@ -27,9 +27,8 @@ namespace Ui {
 class MainWindow;
 }
 
+#include "controllerscene.h"
 #include "rendercontroller.h"
-#include "renderallocationitem.h"
-#include "rendertarget.h"
 
 class MainWindow : public QMainWindow
 {

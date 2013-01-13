@@ -17,11 +17,6 @@
 #ifndef RENDERCONTROLLER_H
 #define RENDERCONTROLLER_H
 
-#include <QGraphicsScene>
-
-#include <QMap>
-#include <QHash>
-
 #include <QSemaphore>
 #include <QThreadPool>
 #include <QRunnable>
@@ -29,51 +24,12 @@
 #include <time.h>
 #include <fstream>
 
+using namespace std;
+
 #include "renderallocationitem.h"
 #include "tracecontrollerdialog.h"
 
-#include <core/remote_tracing.h>
-
-using namespace std;
-
-typedef struct ControllerInfo {
-    unsigned int allocated;
-    unsigned int totalSize;
-    unsigned int peakUsage;
-    unsigned int lowestUsage;
-    float usageRatio;
-} ControllerInfo;
-
-class ControllerScene : public QGraphicsScene
-{
-    Q_OBJECT
-public:
-    explicit ControllerScene(QObject *parent, DFBTracingBufferData* info);
-
-    void setSceneRect(const QRectF &rect);
-    void setSceneRect(qreal x, qreal y, qreal w, qreal h);
-
-    float aspectRatio();
-
-    void addItem(RenderAllocationItem *item);
-    void removeItem(RenderAllocationItem *item);
-
-    RenderAllocationItem* lookup(unsigned int offset);
-
-    const ControllerInfo& getInfo();
-
-signals:
-    void allocationChanged(const ControllerInfo& info);
-
-private:
-    DFBTracingBufferData m_allocation;
-    ControllerInfo m_info;
-
-    QHash<unsigned int, RenderAllocationItem *> m_allocationItemsHash;
-
-    float m_renderAspectRatio;
-};
-
+class ControllerScene;
 class TraceControllerDialog;
 
 class RenderController : public QObject
