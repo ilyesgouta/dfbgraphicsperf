@@ -49,7 +49,7 @@ private slots:
     void saveToFile();
     void playbackTrace();
 
-    void newSurfacePool(ControllerScene *scene, char* name);
+    void newRenderTarget(ControllerScene *scene, char* name);
     void lostPackets(unsigned int lastValidNseq, unsigned int expectedNseq);
     void missingInformation(unsigned int nseq);
     void finished();

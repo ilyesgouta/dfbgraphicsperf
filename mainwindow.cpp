@@ -147,7 +147,7 @@ void MainWindow::playbackTrace()
 
     m_renderController = new RenderController(traceName, 240);
 
-    connect(m_renderController, SIGNAL(newSurfacePool(ControllerScene*, char*)), this, SLOT(newSurfacePool(ControllerScene*, char*)));
+    connect(m_renderController, SIGNAL(newRenderTarget(ControllerScene*, char*)), this, SLOT(newRenderTarget(ControllerScene*, char*)));
     connect(m_renderController, SIGNAL(missingInformation(unsigned int)), this, SLOT(missingInformation(unsigned int)));
     connect(m_renderController, SIGNAL(lostPackets(unsigned int, unsigned int)), this, SLOT(lostPackets(unsigned int, unsigned int)));
     connect(m_renderController, SIGNAL(finished()), this, SLOT(finished()));
@@ -165,9 +165,10 @@ void MainWindow::playbackTrace()
     m_renderController->renderTrace();
 }
 
-void MainWindow::newSurfacePool(ControllerScene* scene, char* name)
+void MainWindow::newRenderTarget(ControllerScene* scene, char* name)
 {
     char buf[256];
+    bool ret;
 
     RenderTarget* renderTarget = new RenderTarget();
     renderTarget->setScene(scene);
