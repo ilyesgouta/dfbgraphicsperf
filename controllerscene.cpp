@@ -21,7 +21,7 @@
 #include <assert.h>
 
 #include "controllerscene.h"
-#include "renderallocationitem.h"
+#include "allocationrenderitem.h"
 
 ControllerScene::ControllerScene(QObject *parent, DFBTracingBufferData *info) : QGraphicsScene(parent)
 {
@@ -52,7 +52,7 @@ float ControllerScene::aspectRatio()
     return m_renderAspectRatio;
 }
 
-void ControllerScene::addItem(RenderAllocationItem *item)
+void ControllerScene::addItem(AllocationRenderItem *item)
 {
     m_allocationItemsHash.insert(item->allocation().offset, item);
     QGraphicsScene::addItem(item);
@@ -66,7 +66,7 @@ void ControllerScene::addItem(RenderAllocationItem *item)
     emit allocationChanged(m_info);
 }
 
-void ControllerScene::removeItem(RenderAllocationItem *item)
+void ControllerScene::removeItem(AllocationRenderItem *item)
 {
     m_allocationItemsHash.remove(item->allocation().offset);
     QGraphicsScene::removeItem(item);
@@ -80,7 +80,7 @@ void ControllerScene::removeItem(RenderAllocationItem *item)
     emit allocationChanged(m_info);
 }
 
-RenderAllocationItem* ControllerScene::lookup(unsigned int offset)
+AllocationRenderItem* ControllerScene::lookup(unsigned int offset)
 {
     return m_allocationItemsHash.value(offset);
 }

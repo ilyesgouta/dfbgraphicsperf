@@ -26,7 +26,7 @@
 
 using namespace std;
 
-#include "renderallocationitem.h"
+#include "allocationrenderitem.h"
 #include "tracecontrollerdialog.h"
 
 class ControllerScene;

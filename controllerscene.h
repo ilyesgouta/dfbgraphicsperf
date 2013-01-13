@@ -24,7 +24,7 @@
 
 #include <core/remote_tracing.h>
 
-class RenderAllocationItem;
+class AllocationRenderItem;
 
 typedef struct ControllerInfo {
     unsigned int allocated;
@@ -45,10 +45,10 @@ public:
 
     float aspectRatio();
 
-    void addItem(RenderAllocationItem *item);
-    void removeItem(RenderAllocationItem *item);
+    void addItem(AllocationRenderItem *item);
+    void removeItem(AllocationRenderItem *item);
 
-    RenderAllocationItem* lookup(unsigned int offset);
+    AllocationRenderItem* lookup(unsigned int offset);
 
     const ControllerInfo& getInfo();
 
@@ -59,7 +59,7 @@ private:
     DFBTracingBufferData m_allocation;
     ControllerInfo m_info;
 
-    QHash<unsigned int, RenderAllocationItem *> m_allocationItemsHash;
+    QHash<unsigned int, AllocationRenderItem *> m_allocationItemsHash;
 
     float m_renderAspectRatio;
 };

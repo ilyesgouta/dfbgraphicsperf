@@ -15,7 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "allocationrendercontroller.h"
-#include "renderallocationitem.h"
+#include "allocationrenderitem.h"
 
 #include <QPainter>
 
@@ -23,7 +23,7 @@
 
 DirectFBPixelFormatNames(pf_names);
 
-RenderAllocationItem::RenderAllocationItem(ControllerScene *scene, DFBTracingBufferData *data)
+AllocationRenderItem::AllocationRenderItem(ControllerScene *scene, DFBTracingBufferData *data)
 {
     m_age = 0;
     m_scene = scene;
@@ -31,7 +31,7 @@ RenderAllocationItem::RenderAllocationItem(ControllerScene *scene, DFBTracingBuf
     m_text = 0;
 }
 
-void RenderAllocationItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+void AllocationRenderItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     int x1, y1, x2, y2;
 
@@ -58,7 +58,7 @@ void RenderAllocationItem::paint(QPainter *painter, const QStyleOptionGraphicsIt
     }
 }
 
-QRectF RenderAllocationItem::boundingRect () const
+QRectF AllocationRenderItem::boundingRect () const
 {
     QRectF rect;
 
@@ -84,7 +84,7 @@ QRectF RenderAllocationItem::boundingRect () const
     return rect;
 }
 
-void RenderAllocationItem::setPosition()
+void AllocationRenderItem::setPosition()
 {
     char buf[256];
 
@@ -100,7 +100,7 @@ void RenderAllocationItem::setPosition()
     m_text->setParentItem(this);
 }
 
-int RenderAllocationItem::elder()
+int AllocationRenderItem::elder()
 {
     return (m_age++);
 }

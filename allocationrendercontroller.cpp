@@ -21,7 +21,7 @@
 #include <assert.h>
 
 #include "allocationrendercontroller.h"
-#include "renderallocationitem.h"
+#include "allocationrenderitem.h"
 
 AllocationRenderController::AllocationRenderController(QString ipAddr, int port, bool saveToFile)
 {
@@ -373,7 +373,7 @@ void AllocationRenderController::tracePlaybackEndedEvent()
 
 void AllocationRenderController::renderAllocation(ControllerScene *scene, DFBTracingBufferData* data)
 {
-    RenderAllocationItem *allocationItem = new RenderAllocationItem(scene, data);
+    AllocationRenderItem *allocationItem = new AllocationRenderItem(scene, data);
 
     allocationItem->setPosition();
 
@@ -383,7 +383,7 @@ void AllocationRenderController::renderAllocation(ControllerScene *scene, DFBTra
 
 void AllocationRenderController::releaseAllocation(ControllerScene *scene, DFBTracingBufferData* data)
 {
-    RenderAllocationItem* item = scene->lookup(data->offset);
+    AllocationRenderItem* item = scene->lookup(data->offset);
 
     if (item) {
         scene->removeItem(item);

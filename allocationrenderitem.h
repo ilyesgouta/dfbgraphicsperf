@@ -28,10 +28,10 @@
 #include "controllerscene.h"
 #include "allocationrendercontroller.h"
 
-class RenderAllocationItem : public QGraphicsItem
+class AllocationRenderItem : public QGraphicsItem
 {
 public:
-    explicit RenderAllocationItem(ControllerScene *scene, DFBTracingBufferData *data);
+    explicit AllocationRenderItem(ControllerScene *scene, DFBTracingBufferData *data);
 
     QRectF boundingRect () const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
