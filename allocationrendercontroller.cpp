@@ -196,14 +196,14 @@ AllocationRenderController::ReceiverThread::ReceiverThread(AllocationRenderContr
 {
     m_parent = parent;
 
-    QObject::connect(m_parent, SIGNAL(partialAllocation(CSPEPacketEvent)), m_parent, SLOT(partialAllocationEvent(CSPEPacketEvent)));
-    QObject::connect(m_parent, SIGNAL(partialRelease(CSPEPacketEvent)), m_parent, SLOT(partialReleaseEvent(CSPEPacketEvent)));
+    QObject::connect(m_parent, SIGNAL(bufferAllocation(DFBTracingPacket)), m_parent, SLOT(allocationEvent(DFBTracingPacket)));
+    QObject::connect(m_parent, SIGNAL(bufferRelease(DFBTracingPacket)), m_parent, SLOT(releaseEvent(DFBTracingPacket)));
 }
 
 AllocationRenderController::ReceiverThread::~ReceiverThread()
 {
-    QObject::disconnect(m_parent, SIGNAL(partialAllocation(CSPEPacketEvent)));
-    QObject::disconnect(m_parent, SIGNAL(partialRelease(CSPEPacketEvent)));
+    QObject::disconnect(m_parent, SIGNAL(bufferAllocation(DFBTracingPacket)));
+    QObject::disconnect(m_parent, SIGNAL(bufferRelease(DFBTracingPacket)));
 }
 
 void AllocationRenderController::ReceiverThread::run()

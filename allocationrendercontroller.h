@@ -66,8 +66,8 @@ private slots:
     void timeLineTracking(int value);
     void timeLineReleased(int value);
 
-    void allocationEvent(DFBTracingPacket type);
-    void releaseEvent(DFBTracingPacket type);
+    void allocationEvent(DFBTracingPacket packet);
+    void releaseEvent(DFBTracingPacket packet);
 
     void tracePlaybackEndedEvent();
 
