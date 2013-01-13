@@ -287,7 +287,7 @@ void MainWindow::finished()
 
 void MainWindow::about()
 {
-    QMessageBox::information(this, "DFbGraphicsPerf", "DFbGraphicsPerf, (C) Ilyes Gouta (ilyes.gouta@gmail.com), 2011-2012.\n"
+    QMessageBox::information(this, "DFbGraphicsPerf", "DFbGraphicsPerf\n(C) 2011-2013 Ilyes Gouta, ilyes.gouta@gmail.com\n"
                                                         "Released under the GNU General Public License v3.");
 }
 
