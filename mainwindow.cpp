@@ -118,7 +118,7 @@ void MainWindow::connectToServer()
 
     m_renderController = new AllocationRenderController(serverIpAddr, serverPort, m_saveToFileAction->isChecked());
 
-    connect(m_renderController, SIGNAL(newSurfacePool(SceneController*, char*)), this, SLOT(newSurfacePool(SceneController*, char*)));
+    connect(m_renderController, SIGNAL(newSurfacePool(SceneController*, char*)), this, SLOT(newRenderTarget(SceneController*, char*)));
     connect(m_renderController, SIGNAL(missingInformation(unsigned int)), this, SLOT(missingInformation(unsigned int)));
     connect(m_renderController, SIGNAL(lostPackets(unsigned int, unsigned int)), this, SLOT(lostPackets(unsigned int, unsigned int)));
     connect(m_renderController, SIGNAL(finished()), this, SLOT(finished()));
@@ -182,11 +182,11 @@ void MainWindow::newRenderTarget(SceneController* scene, char* name)
     renderTarget->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
 
     if (m_connectedSender) {
-        ret = disconnect(m_connectedSender, SIGNAL(statusChanged(const ControllerInfo&)), this, SLOT(statusChanged(const ControllerInfo&)));
+        ret = disconnect(m_connectedSender, SIGNAL(statusChanged()), this, SLOT(statusChanged()));
         assert(ret == true);
     }
 
-    ret = connect(scene, SIGNAL(statusChanged(const ControllerInfo&)), this, SLOT(statusChanged(const ControllerInfo&)), Qt::UniqueConnection);
+    ret = connect(scene, SIGNAL(statusChanged()), this, SLOT(statusChanged()), Qt::UniqueConnection);
     assert(ret == true);
 
     m_connectedSender = scene;
