@@ -77,7 +77,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_renderController = 0;
 
-    qRegisterMetaType<DFBTracingEventType>("DFBTracingPacket");
+    qRegisterMetaType<DFBTracingPacket>("DFBTracingPacket");
 }
 
 MainWindow::~MainWindow()
