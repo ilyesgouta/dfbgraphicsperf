@@ -56,7 +56,7 @@ private:
         float usageRatio;
     } m_info;
 
-    DFBTracingBufferData m_allocation;
+    unsigned int m_poolSize;
 
     QHash<unsigned int, AllocationRenderItem *> m_allocationItemsHash;
 };

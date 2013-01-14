@@ -25,7 +25,8 @@
 
 AllocationSceneController::AllocationSceneController(QObject *parent, DFBTracingBufferData *data) : SceneController(parent, data)
 {
-    m_allocation = *data;
+    m_poolSize = data->poolSize;
+
     m_allocationItemsHash.clear();
 
     memset(&m_info, 0, sizeof(m_info));
@@ -37,14 +38,14 @@ void AllocationSceneController::setSceneRect(const QRectF &rect)
 {
     QGraphicsScene::setSceneRect(rect);
 
-    m_renderAspectRatio = (rect.width() * rect.height()) / m_allocation.poolSize;
+    m_renderAspectRatio = (rect.width() * rect.height()) / m_poolSize;
 }
 
 void AllocationSceneController::setSceneRect(qreal x, qreal y, qreal w, qreal h)
 {
     QGraphicsScene::setSceneRect(x, y, w, h);
 
-    m_renderAspectRatio = (w * h) / m_allocation.poolSize;
+    m_renderAspectRatio = (w * h) / m_poolSize;
 }
 
 float AllocationSceneController::aspectRatio()
@@ -61,6 +62,7 @@ void AllocationSceneController::addItem(QGraphicsItem *item)
 
     m_info.allocated += allocationItem->allocation().size;
     m_info.totalSize = allocationItem->allocation().poolSize;
+
     m_info.usageRatio = (m_info.allocated / (float)m_info.totalSize) * 100;
     m_info.peakUsage = (m_info.peakUsage < m_info.allocated) ? m_info.allocated : m_info.peakUsage;
     m_info.lowestUsage = (m_info.lowestUsage > m_info.allocated) ? m_info.allocated : m_info.lowestUsage;
@@ -77,6 +79,7 @@ void AllocationSceneController::removeItem(QGraphicsItem *item)
 
     m_info.allocated -= allocationItem->allocation().size;
     m_info.totalSize = allocationItem->allocation().poolSize;
+
     m_info.usageRatio = (m_info.allocated / (float)m_info.totalSize) * 100;
     m_info.peakUsage = (m_info.peakUsage < m_info.allocated) ? m_info.allocated : m_info.peakUsage;
     m_info.lowestUsage = (m_info.lowestUsage > m_info.allocated) ? m_info.allocated : m_info.lowestUsage;
