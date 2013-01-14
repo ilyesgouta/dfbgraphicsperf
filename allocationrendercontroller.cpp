@@ -34,6 +34,7 @@ AllocationRenderController::AllocationRenderController(QString ipAddr, int port,
     m_saveToFile = saveToFile;
 
     m_receiver = 0;
+    m_traceController = 0;
 
     time_t t = time(NULL);
     localtime_r(&t, &m_startingDate);
