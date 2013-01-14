@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef RENDERALLOCATIONITEM_H
-#define RENDERALLOCATIONITEM_H
+#ifndef ALLOCATIONRENDERITEM_H
+#define ALLOCATIONRENDERITEM_H
 
 #include <QGraphicsItem>
 #include <QGraphicsScene>
@@ -26,7 +26,6 @@
 #include <core/remote_tracing.h>
 
 #include "scenecontroller.h"
-#include "allocationrendercontroller.h"
 
 class AllocationRenderItem : public QGraphicsItem
 {
@@ -46,15 +45,12 @@ signals:
 public slots:
 
 private:
-    int m_age;
-
-    QGraphicsTextItem *m_text;
-
-    SceneController *m_scene;
-
     DFBTracingBufferData m_allocation;
 
-    float m_renderAspectRatio;
+    SceneController *m_scene;
+    QGraphicsTextItem *m_text;
+
+    int m_age;
 };
 
-#endif // RENDERALLOCATIONITEM_H
+#endif // ALLOCATIONRENDERITEM_H

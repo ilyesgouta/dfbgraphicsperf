@@ -52,7 +52,7 @@ private slots:
     void lostPackets(unsigned int lastValidNseq, unsigned int expectedNseq);
     void missingInformation(unsigned int nseq);
     void finished();
-    void statusChanged(const ControllerInfo& info);
+    void statusChanged();
 
     void tabChanged(int i);
 
@@ -75,7 +75,6 @@ private:
 
     QString m_status;
 
-    ControllerInfo m_info;
     unsigned int m_lostPackets;
 
     AllocationRenderController *m_renderController;

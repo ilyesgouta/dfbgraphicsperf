@@ -16,7 +16,8 @@ SOURCES += main.cpp\
     mainwindow.cpp \
     allocationrendercontroller.cpp \
     allocationrenderitem.cpp \
-    scenecontroller.cpp
+    scenecontroller.cpp \
+    allocationscenecontroller.cpp
 
 HEADERS  += \
     rendertarget.h \
@@ -25,7 +26,8 @@ HEADERS  += \
     mainwindow.h \
     allocationrendercontroller.h \
     allocationrenderitem.h \
-    scenecontroller.h
+    scenecontroller.h \
+    allocationscenecontroller.h
 
 FORMS    += \
     tracecontrollerdialog.ui \

@@ -14,25 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef CONTROLLERSCENE_H
-#define CONTROLLERSCENE_H
+#ifndef SCENECONTROLLER_H
+#define SCENECONTROLLER_H
 
 #include <QGraphicsScene>
 
-#include <QMap>
-#include <QHash>
-
 #include <core/remote_tracing.h>
-
-class AllocationRenderItem;
-
-typedef struct ControllerInfo {
-    unsigned int allocated;
-    unsigned int totalSize;
-    unsigned int peakUsage;
-    unsigned int lowestUsage;
-    float usageRatio;
-} ControllerInfo;
 
 class SceneController : public QGraphicsScene
 {
@@ -40,28 +27,23 @@ class SceneController : public QGraphicsScene
 public:
     explicit SceneController(QObject *parent, DFBTracingBufferData* info);
 
-    void setSceneRect(const QRectF &rect);
-    void setSceneRect(qreal x, qreal y, qreal w, qreal h);
+    virtual void setSceneRect(const QRectF &rect) = 0;
+    virtual void setSceneRect(qreal x, qreal y, qreal w, qreal h) = 0;
 
-    float aspectRatio();
+    virtual float aspectRatio() = 0;
 
-    void addItem(AllocationRenderItem *item);
-    void removeItem(AllocationRenderItem *item);
+    virtual void addItem(QGraphicsItem *item) = 0;
+    virtual void removeItem(QGraphicsItem *item) = 0;
 
-    AllocationRenderItem* lookup(unsigned int offset);
+    virtual QGraphicsItem* lookup(unsigned int offset) = 0;
 
-    const ControllerInfo& getInfo();
+    virtual void getStatus(QString& status) = 0;
 
 signals:
-    void allocationChanged(const ControllerInfo& info);
+    void statusChanged();
 
-private:
-    DFBTracingBufferData m_allocation;
-    ControllerInfo m_info;
-
-    QHash<unsigned int, AllocationRenderItem *> m_allocationItemsHash;
-
+protected:
     float m_renderAspectRatio;
 };
 
-#endif // CONTROLLERSCENE_H
+#endif // SCENECONTROLLER_H

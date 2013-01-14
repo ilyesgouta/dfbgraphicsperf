@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef RENDERCONTROLLER_H
-#define RENDERCONTROLLER_H
+#ifndef ALLOCATIONRENDERCONTROLLER_H
+#define ALLOCATIONRENDERCONTROLLER_H
 
 #include <QSemaphore>
 #include <QThreadPool>
@@ -133,4 +133,4 @@ private:
     ControllerStatus m_controllerStatus;
 };
 
-#endif // RENDERCONTROLLER_H
+#endif // ALLOCATIONRENDERCONTROLLER_H

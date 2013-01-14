@@ -77,8 +77,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_renderController = 0;
 
-    memset(&m_info, 0, sizeof(m_info));
-
     qRegisterMetaType<DFBTracingEventType>("DFBTracingPacket");
 }
 
@@ -234,24 +232,19 @@ void MainWindow::lostPackets(unsigned int lastValidNseq, unsigned int expectedNs
     updateStatus();
 }
 
-void MainWindow::statusChanged(const ControllerInfo& info)
+void MainWindow::statusChanged()
 {
-    m_info = info;
-
     updateStatus();
 }
 
 void MainWindow::updateStatus()
 {
-    char buf[256];
+    QString status;
 
-    sprintf(buf, "Allocated video memory:\n"
-                 "  Currently allocated: %d (ratio: %.2f%%)\n"
-                 "  Peak usage: %d, Lowest usage: %d\n"
-                 "Lost packets: %d\n",
-                 m_info.allocated, m_info.usageRatio, m_info.peakUsage, m_info.lowestUsage, m_lostPackets);
+    if (m_connectedSender)
+        m_connectedSender->getStatus(status);
 
-    ui->label->setText(buf);
+    ui->label->setText(status);
 }
 
 void MainWindow::tabChanged(int i)
@@ -266,17 +259,16 @@ void MainWindow::tabChanged(int i)
     if (target && target->scene())
     {
         if (m_connectedSender) {
-            ret = disconnect(m_connectedSender, SIGNAL(statusChanged(const ControllerInfo&)), this, SLOT(statusChanged(const ControllerInfo&)));
+            ret = disconnect(m_connectedSender, SIGNAL(statusChanged()), this, SLOT(statusChanged()));
             assert(ret == true);
         }
 
-        m_info = static_cast<SceneController*>(target->scene())->getInfo();
-        updateStatus();
-
-        ret = connect(target->scene(), SIGNAL(statusChanged(const ControllerInfo&)), this, SLOT(statusChanged(const ControllerInfo&)), Qt::UniqueConnection);
+        ret = connect(target->scene(), SIGNAL(statusChanged()), this, SLOT(statusChanged()), Qt::UniqueConnection);
         assert(ret == true);
 
         m_connectedSender = static_cast<SceneController*>(target->scene());
+
+        updateStatus();
     }
 }
 

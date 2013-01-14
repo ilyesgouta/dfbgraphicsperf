@@ -14,10 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "allocationrendercontroller.h"
-#include "allocationrenderitem.h"
-
 #include <QPainter>
+
+#include "allocationrenderitem.h"
 
 #define UNUSED_PARAM(a) (a) = (a)
 
@@ -102,5 +101,5 @@ void AllocationRenderItem::setPosition()
 
 int AllocationRenderItem::elder()
 {
-    return (m_age++);
+    return m_age++;
 }

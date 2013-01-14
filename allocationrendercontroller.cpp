@@ -20,8 +20,9 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "allocationrendercontroller.h"
 #include "allocationrenderitem.h"
+#include "allocationscenecontroller.h"
+#include "allocationrendercontroller.h"
 
 AllocationRenderController::AllocationRenderController(QString ipAddr, int port, bool saveToFile)
 {
@@ -383,7 +384,7 @@ void AllocationRenderController::renderAllocation(SceneController *scene, DFBTra
 
 void AllocationRenderController::releaseAllocation(SceneController *scene, DFBTracingBufferData* data)
 {
-    AllocationRenderItem* item = scene->lookup(data->offset);
+    QGraphicsItem* item = scene->lookup(data->offset);
 
     if (item) {
         scene->removeItem(item);
@@ -418,7 +419,7 @@ void AllocationRenderController::processSnapshotEvent(char* buf, int size)
             // Create a new ControllerScene if this is a new poolId
             if (!m_controllerSceneMap.contains(pool->stats[i].poolId))
             {
-                scene = new SceneController(this, &pool->stats[i]);
+                scene = new AllocationSceneController(this, &pool->stats[i]);
 
                 m_controllerSceneMap.insert(pool->stats[i].poolId, scene);
 
@@ -456,7 +457,7 @@ void AllocationRenderController::allocationEvent(DFBTracingPacket packet)
     // Create a new ControllerScene if this is a new poolId
     if (!scene && !m_controllerSceneMap.contains(data->poolId))
     {
-        scene = new SceneController(this, data);
+        scene = new AllocationSceneController(this, data);
 
         m_controllerSceneMap.insert(data->poolId, scene);
 
