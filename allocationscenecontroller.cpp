@@ -91,11 +91,7 @@ QGraphicsItem* AllocationSceneController::lookup(unsigned int offset)
 
 void AllocationSceneController::getStatus(QString& status)
 {
-    char buf[256];
-
-    sprintf(buf, "Allocated video memory:\n"
-                 "  Currently allocated: %d (ratio: %.2f%%)\n"
-                 "  Peak usage: %d, Lowest usage: %d\n"
-                 "Lost packets: %d\n",
-                 m_info.allocated, m_info.usageRatio, m_info.peakUsage, m_info.lowestUsage);
+    status.sprintf("Currently allocated: %d (ratio: %.2f%%)\n"
+                   "Peak usage: %d, Lowest usage: %d\n",
+                   m_info.allocated, m_info.usageRatio, m_info.peakUsage, m_info.lowestUsage);
 }
