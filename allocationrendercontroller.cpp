@@ -386,8 +386,10 @@ void AllocationRenderController::releaseAllocation(SceneController *scene, DFBTr
 {
     QGraphicsItem* item = scene->lookup(data->offset);
 
-    if (item) {
-        scene->removeItem(item);
+    AllocationRenderItem* allocationItem = static_cast<AllocationRenderItem*>(item);
+
+    if (allocationItem) {
+        scene->removeItem(allocationItem);
         scene->update();
     }
 }
